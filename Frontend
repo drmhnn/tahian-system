@@ -1,1 +1,7 @@
-
+git clone https://github.com/<your-org>/<your-repo>.git
+cd <your-repo>
+mkdir prototype
+cp ~/Downloads/index.html prototype/index.html
+git add prototype
+git commit -m "Add TahiAn high-fidelity clickable prototype"
+git push
