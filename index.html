@@ -13,6 +13,38 @@
   <style>
     body { font-family: 'Inter', sans-serif; }
     [x-cloak] { display: none !important; }
+
+    @media print {
+  @page { size: auto; margin: 6mm; }
+
+  html, body {
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  body > :not(#print-job-slip) { display: none !important; }
+
+  #print-job-slip {
+    display: block !important;
+    width: 3in;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 4mm;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    line-height: 1.4;
+    break-inside: avoid;
+  }
+}
+
   </style>
 </head>
 
@@ -1080,6 +1112,615 @@
   </div>
 </div>
       
+
+<!-- SCREEN 5: Customers Page -->
+      <div x-show="currentTab === 'customers'" x-cloak 
+           x-data="{ 
+             searchQuery: '', 
+             filterType: 'All',
+             customers: [
+               { id: 'C-0001', name: 'Lance Sacay', mobile: '09271251255', type: 'Individual', measurements: 'Recorded', orders: 1, initials: 'LS', color: 'bg-slate-900 text-white' },
+               { id: 'C-0002', name: 'MSU IIT', mobile: '09121512616', type: 'Bulk', measurements: 'Per Size', orders: 4, initials: 'MI', color: 'bg-violet-100 text-violet-800' },
+               { id: 'C-0003', name: 'Jon Berd', mobile: '09682951862', type: 'Individual', measurements: 'Recorded', orders: 2, initials: 'JB', color: 'bg-slate-900 text-white' },
+               { id: 'C-0004', name: 'Maria Santos', mobile: '09175550142', type: 'Individual', measurements: 'Recorded', orders: 1, initials: 'MS', color: 'bg-slate-900 text-white' },
+               { id: 'C-0005', name: 'Daniel Migz', mobile: '09284410923', type: 'Individual', measurements: 'Unrecorded', orders: 1, initials: 'DM', color: 'bg-slate-900 text-white' }
+             ],
+             get filteredCustomers() {
+               const term = this.searchQuery.trim().toLowerCase().replace(/\s+/g, '');
+               return this.customers.filter(c => 
+                 (this.filterType === 'All' || c.type === this.filterType) &&
+                 (!term || c.name.toLowerCase().replace(/\s+/g, '').includes(term) || c.mobile.includes(term) || c.id.toLowerCase().includes(term))
+               );
+             },
+             formatPhone(n) { return `${n.slice(0, 4)} ${n.slice(4, 7)} ${n.slice(7)}`; }
+           }">
+        
+        <!-- Page Header -->
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <p class="text-xs font-medium text-slate-500">Customer <span class="text-slate-300">/</span> <span class="text-slate-700">Directory</span></p>
+            <h1 class="text-2xl font-semibold tracking-tight mt-1">Customers</h1>
+          </div>
+          <button type="button" @click="addCustomerModal = true" class="h-10 px-4 rounded-lg bg-slate-900 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm hover:bg-slate-800 active:bg-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-900 transition self-start sm:self-auto">
+            <i data-lucide="user-plus" class="w-4 h-4"></i> Add Customer
+          </button>
+        </div>
+
+        <!-- Main Container Background -->
+        <section class="bg-white rounded-xl border border-slate-200 shadow-sm">
+          
+          <!-- Search and filter bar -->
+          <div class="flex flex-col md:flex-row md:items-center gap-3 px-5 py-4 border-b border-slate-100">
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-[17px] h-[17px] absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+              <input type="search" x-model="searchQuery" placeholder="Search by name or mobile number..." aria-label="Search customers" class="w-full h-11 rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-500 transition" />
+            </div>
+            <div role="tablist" aria-label="Filter by customer type" class="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 self-start md:self-auto">
+              <button role="tab" @click="filterType = 'All'" :class="filterType === 'All' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'" class="h-9 px-3.5 rounded-md text-sm font-medium transition">All</button>
+              <button role="tab" @click="filterType = 'Individual'" :class="filterType === 'Individual' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'" class="h-9 px-3.5 rounded-md text-sm font-medium transition">Individual</button>
+              <button role="tab" @click="filterType = 'Bulk'" :class="filterType === 'Bulk' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'" class="h-9 px-3.5 rounded-md text-sm font-medium transition">Bulk</button>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-slate-50 border-b border-slate-100">
+                <tr>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Customer</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Mobile</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Type</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Measurements</th>
+                  <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Orders</th>
+                  <th class="w-10" aria-hidden="true"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="c in filteredCustomers" :key="c.id">
+                  <tr @click="currentTab = 'customer_profile'" tabindex="0" class="group border-b border-slate-100 last:border-b-0 hover:bg-slate-50/80 focus:bg-slate-50 focus:outline-none transition cursor-pointer">
+                    <td class="px-5 py-4 whitespace-nowrap">
+                      <div class="flex items-center gap-3">
+                        <span :class="c.color" class="grid place-items-center w-9 h-9 rounded-full text-xs font-semibold shrink-0" x-text="c.initials"></span>
+                        <div class="leading-tight">
+                          <p class="font-semibold text-slate-900" x-text="c.name"></p>
+                          <p class="mt-0.5 text-xs text-slate-500 tabular" x-text="c.id"></p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-5 py-4 whitespace-nowrap text-slate-700 tabular">
+                      <span class="inline-flex items-center gap-1.5"><i data-lucide="phone" class="w-[13px] h-[13px] text-slate-400"></i> <span x-text="formatPhone(c.mobile)"></span></span>
+                    </td>
+                    <td class="px-5 py-4 whitespace-nowrap">
+                      <template x-if="c.type === 'Bulk'">
+                        <span class="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700 ring-1 ring-inset ring-violet-200">
+                          <i data-lucide="building-2" class="w-3 h-3 stroke-[2.25]"></i> Bulk
+                        </span>
+                      </template>
+                      <template x-if="c.type === 'Individual'">
+                        <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-slate-200">
+                          <i data-lucide="user-round" class="w-3 h-3 stroke-[2.25]"></i> Individual
+                        </span>
+                      </template>
+                    </td>
+                    <td class="px-5 py-4 whitespace-nowrap">
+                      <template x-if="c.measurements === 'Recorded'">
+                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                          <i data-lucide="check-circle-2" class="w-3 h-3 stroke-[2.5]"></i> Recorded
+                        </span>
+                      </template>
+                      <template x-if="c.measurements === 'Per Size'">
+                        <span class="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 ring-1 ring-inset ring-sky-200">
+                          <i data-lucide="ruler" class="w-3 h-3 stroke-[2.25]"></i> Per Size
+                        </span>
+                      </template>
+                      <template x-if="c.measurements === 'Unrecorded'">
+                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
+                          <i data-lucide="circle-dashed" class="w-3 h-3 stroke-[2.5]"></i> Unrecorded
+                        </span>
+                      </template>
+                    </td>
+                    <td class="px-5 py-4 whitespace-nowrap text-right">
+                      <span class="inline-flex min-w-[2rem] justify-center rounded-md bg-slate-100 px-2 py-0.5 text-sm font-semibold text-slate-800 tabular" x-text="c.orders"></span>
+                    </td>
+                    <td class="pr-4 text-slate-300 group-hover:text-slate-500 transition">
+                      <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </td>
+                  </tr>
+                </template>
+
+                <!-- Empty State (No matching records) -->
+                <tr x-show="filteredCustomers.length === 0" style="display: none;">
+                  <td colspan="6" class="px-5 py-14 text-center">
+                    <i data-lucide="search-x" class="mx-auto w-[22px] h-[22px] text-slate-400"></i>
+                    <p class="mt-2 text-sm font-medium text-slate-700">No customers match "<span x-text="searchQuery"></span>"</p>
+                    <p class="text-xs text-slate-500 mt-0.5">Try a different name or mobile number, or add a new customer.</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <footer class="flex items-center justify-between px-5 py-3 border-t border-slate-100 text-xs text-slate-500">
+            <span>Showing <span class="font-semibold text-slate-700 tabular" x-text="filteredCustomers.length"></span> of <span class="tabular" x-text="customers.length"></span> customers</span>
+            <span class="hidden sm:inline">Click a row to view the customer profile</span>
+          </footer>
+        </section>
+
+      </div>
+
+
+    <!-- SCREEN 5B: Customer Profile (Jon Berd) -->
+
+<div x-show="currentTab === 'customer_profile'" x-cloak
+     x-data="{
+       customer: { name: 'Jon Berd', id: 'C-0003', mobile: '09682951862', type: 'Individual', initials: 'JB' },
+       savedOn: 'Oct 28, 2026',
+       upper: [
+         { label: 'Shoulder', value: 17 },
+         { label: 'Chest', value: 38, changed: true },
+         { label: 'Length', value: 28 },
+         { label: 'Sleeve', value: 9 }
+       ],
+       lower: [
+         { label: 'Waist', value: 32 },
+         { label: 'Hips', value: 38 },
+         { label: 'Pants Length', value: 39 },
+         { label: 'Leg Opening', value: 7 }
+       ],
+       history: [
+         { date: 'Oct 28, 2026', current: true, field: 'Chest', from: 37, to: 38 },
+         { date: 'Sept 22, 2026', current: false, field: 'Waist', from: 33, to: 32 },
+         { date: 'Aug 20, 2026', current: false, note: 'First saved' }
+       ],
+       orders: [
+         { id: 'ORD 1008', garment: 'School Uniform', date: 'Oct 20, 2026', status: 'Claimed', amount: 500, balance: 0 },
+         { id: 'ORD 986', garment: 'Pants', date: 'Oct 08, 2026', status: 'Claimed', amount: 780, balance: 0 }
+       ],
+       peso(n) { return 'PHP ' + Number(n).toLocaleString('en-PH'); },
+       fmtPhone(n) { return `${n.slice(0, 4)} ${n.slice(4, 7)} ${n.slice(7)}`; }
+     }">
+
+  <div class="space-y-6">
+
+    <!-- Back To Customers -->
+    <button type="button" @click="currentTab = 'customers'" class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Customers
+    </button>
+
+    <!-- Profile header -->
+    <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+      <div class="flex items-center gap-4 min-w-0">
+        <span class="grid place-items-center w-14 h-14 rounded-xl bg-slate-900 text-white text-lg font-semibold shrink-0" x-text="customer.initials"></span>
+        <div class="min-w-0">
+          <p class="text-xs font-medium text-slate-500">Customer <span class="text-slate-300">/</span> <span class="text-slate-700">Profile</span></p>
+          <div class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h1 class="text-2xl font-semibold tracking-tight" x-text="customer.name"></h1>
+            <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-slate-200">
+              <i data-lucide="user-round" class="w-3 h-3 stroke-[2.25]"></i> <span x-text="customer.type"></span>
+            </span>
+          </div>
+          <p class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
+            <span class="inline-flex items-center gap-1.5 tabular"><i data-lucide="hash" class="w-3.5 h-3.5 text-slate-400"></i> <span x-text="customer.id"></span></span>
+            <span class="inline-flex items-center gap-1.5 tabular"><i data-lucide="phone" class="w-3.5 h-3.5 text-slate-400"></i> <span x-text="fmtPhone(customer.mobile)"></span></span>
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" class="h-10 px-4 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 inline-flex items-center gap-2 shadow-sm hover:bg-slate-50 hover:text-slate-900 transition">
+          <i data-lucide="pencil" class="w-4 h-4"></i> Edit
+        </button>
+        <button type="button" @click="currentTab = 'create_order'" class="h-10 px-4 rounded-lg bg-slate-900 text-white text-sm font-semibold inline-flex items-center gap-2 shadow-sm hover:bg-slate-800 active:bg-slate-950 transition">
+          <i data-lucide="plus" class="w-4 h-4 stroke-[2.5]"></i> New Order
+        </button>
+      </div>
+    </section>
+
+    <!-- Current measurements & MMeasurement History-->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Current measurements -->
+      <section class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
+        <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
+          <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700 shrink-0"><i data-lucide="ruler" class="w-[18px] h-[18px]"></i></span>
+          <div class="flex-1 min-w-0">
+            <h2 class="text-[15px] font-semibold leading-tight">Current Saved Measurements</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Saved <span x-text="savedOn"></span></p>
+          </div>
+          <button type="button" class="h-8 px-3 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-700 inline-flex items-center gap-2 shadow-sm hover:bg-slate-50 transition">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Update
+          </button>
+        </header>
+        <div class="flex-1 p-5 space-y-5">
+          <div>
+            <h3 class="mb-2.5 text-xs font-semibold uppercase tracking-wider text-slate-500">Upper Body</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <template x-for="m in upper" :key="m.label">
+                <div class="rounded-lg border px-4 py-3" :class="m.changed ? 'bg-white border-slate-300 ring-1 ring-slate-900/5' : 'bg-slate-50 border-slate-200'">
+                  <p class="text-xs font-medium text-slate-500 flex items-center justify-between gap-2">
+                    <span class="truncate" x-text="m.label"></span>
+                    <span x-show="m.changed" class="rounded bg-slate-900 px-1.5 py-px text-[10px] font-semibold text-white">Updated</span>
+                  </p>
+                  <p class="mt-1 flex items-baseline gap-1.5">
+                    <span class="text-2xl font-bold tracking-tight tabular" x-text="m.value"></span>
+                    <span class="rounded-md bg-white border border-slate-200 px-1.5 py-0.5 text-[11px] font-medium text-slate-600">in</span>
+                  </p>
+                </div>
+              </template>
+            </div>
+          </div>
+          <div>
+            <h3 class="mb-2.5 text-xs font-semibold uppercase tracking-wider text-slate-500">Lower Body</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <template x-for="m in lower" :key="m.label">
+                <div class="rounded-lg border px-4 py-3" :class="m.changed ? 'bg-white border-slate-300 ring-1 ring-slate-900/5' : 'bg-slate-50 border-slate-200'">
+                  <p class="text-xs font-medium text-slate-500 flex items-center justify-between gap-2">
+                    <span class="truncate" x-text="m.label"></span>
+                    <span x-show="m.changed" class="rounded bg-slate-900 px-1.5 py-px text-[10px] font-semibold text-white">Updated</span>
+                  </p>
+                  <p class="mt-1 flex items-baseline gap-1.5">
+                    <span class="text-2xl font-bold tracking-tight tabular" x-text="m.value"></span>
+                    <span class="rounded-md bg-white border border-slate-200 px-1.5 py-0.5 text-[11px] font-medium text-slate-600">in</span>
+                  </p>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Measurement history -->
+      <section class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
+        <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
+          <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700 shrink-0"><i data-lucide="history" class="w-[18px] h-[18px]"></i></span>
+          <div class="flex-1 min-w-0">
+            <h2 class="text-[15px] font-semibold leading-tight">Measurement History</h2>
+            <p class="text-xs text-slate-500 mt-0.5"><span x-text="history.length"></span> records</p>
+          </div>
+        </header>
+        <div class="flex-1 p-5">
+          <ol class="relative">
+            <template x-for="(h, i) in history" :key="h.date">
+              <li class="relative pl-8 pb-6 last:pb-0">
+                <span x-show="i < history.length - 1" class="absolute left-[11px] top-6 bottom-0 w-px bg-slate-200" aria-hidden="true"></span>
+                <span class="absolute left-0 top-0.5 grid place-items-center w-6 h-6 rounded-full"
+                      :class="h.current ? 'bg-slate-900 ring-4 ring-slate-900/10' : 'bg-white border border-slate-300'">
+                  <span class="w-1.5 h-1.5 rounded-full" :class="h.current ? 'bg-white' : 'bg-slate-400'"></span>
+                </span>
+                <div class="flex items-center gap-2">
+                  <p class="text-sm font-semibold text-slate-900" x-text="h.date"></p>
+                  <span x-show="h.current" class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-200">Current</span>
+                </div>
+                <p x-show="h.field" class="mt-1.5 inline-flex items-center gap-1.5 rounded-md bg-slate-50 border border-slate-200 px-2 py-1 text-xs text-slate-600 tabular">
+                  <span class="font-medium text-slate-700" x-text="h.field"></span>
+                  <span class="text-slate-400 line-through" x-text="h.from"></span>
+                  <span class="text-slate-400">→</span>
+                  <span class="font-semibold text-slate-900" x-text="h.to + ' in'"></span>
+                </p>
+                <p x-show="h.note" class="mt-1 text-xs text-slate-500" x-text="h.note"></p>
+              </li>
+            </template>
+          </ol>
+        </div>
+      </section>
+    </div>
+
+    <!-- Past orders -->
+    <section class="bg-white rounded-xl border border-slate-200 shadow-sm">
+      <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
+        <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700 shrink-0"><i data-lucide="clipboard-list" class="w-[18px] h-[18px]"></i></span>
+        <div class="flex-1 min-w-0">
+          <h2 class="text-[15px] font-semibold leading-tight">Past Orders</h2>
+          <p class="text-xs text-slate-500 mt-0.5"><span x-text="orders.length"></span> orders</p>
+        </div>
+        <a href="#" class="text-sm font-medium text-slate-600 hover:text-slate-900 inline-flex items-center gap-1">View all <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+      </header>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-slate-50 border-b border-slate-100">
+            <tr>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Order ID</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Garment</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Date</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Status</th>
+              <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Amount</th>
+              <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="o in orders" :key="o.id">
+              <tr @click="currentTab = 'order_details'" tabindex="0" class="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/80 focus:bg-slate-50 focus:outline-none transition cursor-pointer">
+                <td class="px-5 py-4 whitespace-nowrap font-semibold text-slate-900 tabular" x-text="o.id"></td>
+                <td class="px-5 py-4 whitespace-nowrap text-slate-700" x-text="o.garment"></td>
+                <td class="px-5 py-4 whitespace-nowrap text-slate-700 tabular" x-text="o.date"></td>
+                <td class="px-5 py-4 whitespace-nowrap">
+                  <span class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200" x-text="o.status"></span>
+                </td>
+                <td class="px-5 py-4 whitespace-nowrap text-right font-semibold text-slate-900 tabular" x-text="peso(o.amount)"></td>
+                <td class="px-5 py-4 whitespace-nowrap text-right tabular">
+                  <span x-show="o.balance > 0" class="font-semibold text-rose-700" x-text="peso(o.balance)"></span>
+                  <span x-show="o.balance === 0" class="text-slate-400">—</span>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+</div>
+      
+      <!-- SCREEN 6: Inventory -->
+<div x-show="currentTab === 'inventory'" x-cloak
+     @keydown.escape.window="closeDialog()"
+     x-data="{
+       q: '', category: 'All', lowOnly: false,
+       dialogOpen: false, dialogItem: null, mode: 'restock', amount: '',
+       toast: '',
+       items: [
+         { id: 'INV-001', name: 'Silk Charmeuse', spec: 'Royal Blue', location: 'Rack A-3', category: 'Fabric', qty: 15, min: 10, unit: 'm', decimals: 1, updated: '1 hour ago' },
+         { id: 'INV-002', name: 'Shirt Buttons', spec: 'Perlmutt White (12mm)', location: 'Bin B-12', category: 'Hardware', qty: 15, min: 50, unit: 'pcs', decimals: 0, updated: '4 hours ago' },
+         { id: 'INV-003', name: 'Heavy Thread', spec: 'Black Polyester', location: 'Spool Rack 1', category: 'Thread', qty: 2, min: 5, unit: 'spools', decimals: 0, updated: '5 mins ago' }
+       ],
+       tabs: [
+         { label: 'All', value: 'All' },
+         { label: 'Fabrics', value: 'Fabric' },
+         { label: 'Threads', value: 'Thread' },
+         { label: 'Hardware / Notions', value: 'Hardware' }
+       ],
+       tiles: {
+         Fabric: 'bg-sky-50 text-sky-700 ring-sky-200',
+         Hardware: 'bg-violet-50 text-violet-700 ring-violet-200',
+         Thread: 'bg-amber-50 text-amber-700 ring-amber-200'
+       },
+       isLow(i) { return i.qty <= i.min; },
+       fmt(i, n) { return Number(n === undefined ? i.qty : n).toFixed(i.decimals); },
+       catCount(v) { return v === 'All' ? this.items.length : this.items.filter(i => i.category === v).length; },
+       get lowCount() { return this.items.filter(i => this.isLow(i)).length; },
+       get rows() {
+         const t = this.q.trim().toLowerCase();
+         return this.items.filter(i =>
+           (this.category === 'All' || i.category === this.category) &&
+           (!this.lowOnly || this.isLow(i)) &&
+           (!t || (i.name + ' ' + i.spec + ' ' + i.location + ' ' + i.category).toLowerCase().includes(t))
+         );
+       },
+       openDialog(i) { this.dialogItem = i; this.mode = this.isLow(i) ? 'restock' : 'adjust'; this.amount = ''; this.dialogOpen = true; },
+       closeDialog() { this.dialogOpen = false; },
+       get n() { return parseFloat(this.amount) || 0; },
+       get next() {
+         if (!this.dialogItem) return 0;
+         const r = this.mode === 'restock' ? this.dialogItem.qty + this.n : this.dialogItem.qty - this.n;
+         return Math.round(r * 100) / 100;
+       },
+       get error() {
+         if (!this.dialogItem) return null;
+         if (this.n < 0) return 'Enter a positive amount.';
+         if (this.next < 0) return 'Only ' + this.fmt(this.dialogItem) + ' ' + this.dialogItem.unit + ' in stock.';
+         return null;
+       },
+       get canSave() { return this.n > 0 && !this.error; },
+       saveStock() {
+         if (!this.canSave) return;
+         const it = this.dialogItem;
+         const used = this.n, wasRestock = this.mode === 'restock';
+         it.qty = this.next;
+         it.updated = 'Just now';
+         this.dialogOpen = false;
+         this.toast = (wasRestock ? 'Restocked ' : 'Logged cut of ') + this.fmt(it, used) + ' ' + it.unit + ' · ' + it.name;
+         setTimeout(() => this.toast = '', 3000);
+       }
+     }">
+
+  <!-- Page header -->
+  <div class="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+    <div>
+      <p class="text-xs font-medium text-slate-500">Inventory <span class="text-slate-300">/</span> <span class="text-slate-700">Materials</span></p>
+      <h1 class="text-2xl font-semibold tracking-tight mt-1">Stock Inventory</h1>
+    </div>
+    <button type="button" class="h-10 px-4 rounded-lg bg-slate-900 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm hover:bg-slate-800 active:bg-slate-950 transition self-start sm:self-auto">
+      <i data-lucide="plus" class="w-4 h-4 stroke-[2.5]"></i> Add Stock
+    </button>
+  </div>
+
+  <section class="bg-white rounded-xl border border-slate-200 shadow-sm">
+
+    <!-- Search -->
+    <div class="px-5 pt-4 pb-3">
+      <div class="relative">
+        <i data-lucide="search" class="w-[17px] h-[17px] absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+        <input type="search" x-model="q" placeholder="Search by item..." aria-label="Search inventory"
+               class="w-full h-11 rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-500 transition" />
+      </div>
+    </div>
+
+    <!-- Category pills & low-stock toggle -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-5 pb-4 border-b border-slate-100">
+      <div role="tablist" aria-label="Filter by category" class="flex flex-wrap items-center gap-2">
+        <template x-for="t in tabs" :key="t.value">
+          <button type="button" role="tab" @click="category = t.value"
+                  :class="category === t.value ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-900'"
+                  class="h-8 px-3 rounded-full text-sm font-medium inline-flex items-center gap-1.5 border transition">
+            <span x-text="t.label"></span>
+            <span :class="category === t.value ? 'bg-white/15 text-white' : 'bg-slate-100 text-slate-500'"
+                  class="rounded-full px-1.5 text-[11px] font-semibold tabular" x-text="catCount(t.value)"></span>
+          </button>
+        </template>
+      </div>
+      <button type="button" :aria-pressed="lowOnly" @click="lowOnly = !lowOnly"
+              :class="lowOnly ? 'bg-rose-600 border-rose-600 text-white' : 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'"
+              class="h-8 px-3 rounded-full text-sm font-semibold inline-flex items-center gap-1.5 border transition self-start md:self-auto">
+        <i data-lucide="alert-triangle" class="w-3.5 h-3.5 stroke-[2.5]"></i> Low Stock Only
+        <span :class="lowOnly ? 'bg-white/20 text-white' : 'bg-white text-rose-700 ring-1 ring-inset ring-rose-200'"
+              class="rounded-full px-1.5 text-[11px] font-bold tabular" x-text="lowCount"></span>
+      </button>
+    </div>
+
+    <!-- Table -->
+    <div class="relative overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-slate-50 border-b border-slate-100">
+          <tr>
+            <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Item Name</th>
+            <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Category</th>
+            <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Stock <span class="normal-case tracking-normal font-medium text-slate-400">(Meters/Qty)</span></th>
+            <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Status</th>
+            <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Last Updated</th>
+            <th class="px-5 py-3 text-right"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="i in rows" :key="i.id">
+            <tr class="group border-b border-slate-100 last:border-b-0 hover:bg-slate-50/80 transition"
+                :class="isLow(i) ? 'shadow-[inset_3px_0_0_0_#fb7185]' : ''">
+              <td class="px-5 py-4 whitespace-nowrap">
+                <div class="flex items-center gap-3">
+                  <span :class="tiles[i.category]" class="grid place-items-center w-10 h-10 rounded-lg ring-1 shrink-0">
+                    <span x-show="i.category === 'Fabric'"><i data-lucide="layers" class="w-[18px] h-[18px]"></i></span>
+                    <span x-show="i.category === 'Hardware'"><i data-lucide="circle-dot" class="w-[18px] h-[18px]"></i></span>
+                    <span x-show="i.category === 'Thread'"><i data-lucide="scissors" class="w-[18px] h-[18px]"></i></span>
+                  </span>
+                  <div class="leading-tight min-w-0">
+                    <p class="font-semibold text-slate-900" x-text="i.name"></p>
+                    <p class="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+                      <span x-text="i.spec"></span>
+                      <span class="text-slate-300">•</span>
+                      <span class="inline-flex items-center gap-1"><i data-lucide="map-pin" class="w-[11px] h-[11px] text-slate-400"></i><span x-text="i.location"></span></span>
+                    </p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-5 py-4 whitespace-nowrap text-slate-700" x-text="i.category"></td>
+              <td class="px-5 py-4 whitespace-nowrap text-right tabular">
+                <p>
+                  <span class="text-base font-bold" :class="isLow(i) ? 'text-rose-700' : 'text-slate-900'" x-text="fmt(i)"></span>
+                  <span class="ml-1 text-xs font-medium text-slate-500" x-text="i.unit"></span>
+                </p>
+                <p class="text-xs text-slate-500">Min: <span x-text="fmt(i, i.min)"></span> <span x-text="i.unit"></span></p>
+              </td>
+              <td class="px-5 py-4 whitespace-nowrap">
+                <span x-show="!isLow(i)" class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">Healthy</span>
+                <span x-show="isLow(i)" class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 ring-1 ring-inset ring-rose-200">Low</span>
+              </td>
+              <td class="px-5 py-4 whitespace-nowrap text-slate-600">
+                <span :class="i.updated === 'Just now' ? 'text-emerald-700 font-medium' : ''" x-text="i.updated"></span>
+              </td>
+              <td class="px-5 py-4 whitespace-nowrap text-right">
+                <button type="button" @click="openDialog(i)"
+                        :class="isLow(i) ? 'border-rose-200 text-rose-700 hover:bg-rose-50' : 'border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900'"
+                        class="h-8 px-3 rounded-lg border bg-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm transition">
+                  <span x-text="isLow(i) ? '+ Restock' : '+ Adjust'"></span>
+                </button>
+              </td>
+            </tr>
+          </template>
+
+          <tr x-show="rows.length === 0" style="display: none;">
+            <td colspan="6" class="px-5 py-14 text-center">
+              <i data-lucide="search-x" class="mx-auto w-[22px] h-[22px] text-slate-400"></i>
+              <p class="mt-2 text-sm font-medium text-slate-700">No items match these filters</p>
+              <p class="text-xs text-slate-500 mt-0.5">Try another search or category, or turn off Low Stock Only.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="flex flex-wrap items-center justify-between gap-2 px-5 py-3 border-t border-slate-100 text-xs text-slate-500">
+      <span>Showing <span class="font-semibold text-slate-700 tabular" x-text="rows.length"></span> of <span class="tabular" x-text="items.length"></span> items</span>
+      <span x-show="lowCount > 0" class="font-medium text-rose-700"><span x-text="lowCount"></span> <span x-text="lowCount === 1 ? 'item needs' : 'items need'"></span> restocking</span>
+      <span x-show="lowCount === 0" class="font-medium text-emerald-700">All items above minimum</span>
+    </footer>
+  </section>
+
+  <!-- Restock / Adjust Pill -->
+  <div x-show="dialogOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40">
+    <form @click.away="closeDialog()" @submit.prevent="saveStock()" role="dialog" aria-modal="true"
+          class="relative w-full max-w-md bg-white rounded-xl border border-slate-200 shadow-xl">
+      <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
+        <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="sliders-horizontal" class="w-[18px] h-[18px]"></i></span>
+        <div class="flex-1 min-w-0">
+          <h2 class="text-[15px] font-semibold leading-tight"><span x-text="mode === 'restock' ? 'Restock' : 'Adjust'"></span> <span x-text="dialogItem ? dialogItem.name : ''"></span></h2>
+          <p class="text-xs text-slate-500 mt-0.5 truncate" x-text="dialogItem ? dialogItem.spec + ' • ' + dialogItem.location : ''"></p>
+        </div>
+        <button type="button" @click="closeDialog()" class="text-slate-400 hover:text-slate-700" aria-label="Close"><i data-lucide="x" class="w-[18px] h-[18px]"></i></button>
+      </header>
+
+      <div class="p-5 space-y-4">
+        <div class="grid grid-cols-2 gap-1 p-1 rounded-lg bg-slate-100">
+          <button type="button" @click="mode = 'restock'"
+                  :class="mode === 'restock' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'"
+                  class="flex items-center justify-center gap-2 h-9 rounded-md text-sm font-medium transition">
+            <i data-lucide="package-plus" class="w-[15px] h-[15px]"></i> Restock (+)
+          </button>
+          <button type="button" @click="mode = 'adjust'"
+                  :class="mode === 'adjust' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'"
+                  class="flex items-center justify-center gap-2 h-9 rounded-md text-sm font-medium transition">
+            <i data-lucide="scissors" class="w-[15px] h-[15px]"></i> Cut / Use (−)
+          </button>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5" x-text="mode === 'restock' ? 'Quantity received' : 'Quantity cut or used'"></label>
+          <div class="relative">
+            <input type="number" min="0" :step="dialogItem && dialogItem.decimals ? '0.1' : '1'" x-model="amount" placeholder="0"
+                   :class="error ? 'border-rose-400 focus:ring-rose-500/10' : 'border-slate-300 focus:ring-slate-900/10 focus:border-slate-500'"
+                   class="w-full h-10 rounded-lg border bg-white pl-3 pr-16 text-sm font-medium tabular focus:outline-none focus:ring-2 transition" />
+            <span class="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600" x-text="dialogItem ? dialogItem.unit : ''"></span>
+          </div>
+          <p x-show="error" class="mt-1.5 text-xs text-rose-600" x-text="error"></p>
+        </div>
+
+        <div class="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 grid grid-cols-3 gap-2 text-center tabular">
+          <div><p class="text-[11px] text-slate-500">Current</p><p class="text-sm font-semibold" x-text="dialogItem ? fmt(dialogItem) + ' ' + dialogItem.unit : ''"></p></div>
+          <div><p class="text-[11px] text-slate-500">New</p>
+            <p class="text-sm font-bold" :class="next < 0 ? 'text-slate-400' : (dialogItem && next <= dialogItem.min ? 'text-rose-700' : 'text-emerald-700')"
+               x-text="dialogItem ? (next < 0 ? '—' : fmt(dialogItem, next) + ' ' + dialogItem.unit) : ''"></p></div>
+          <div><p class="text-[11px] text-slate-500">Min</p><p class="text-sm font-semibold text-slate-600" x-text="dialogItem ? fmt(dialogItem, dialogItem.min) + ' ' + dialogItem.unit : ''"></p></div>
+        </div>
+      </div>
+
+      <footer class="flex justify-end gap-2 px-5 pb-5">
+        <button type="button" @click="closeDialog()" class="h-10 px-4 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">Cancel</button>
+        <button type="submit" :disabled="!canSave" class="h-10 px-4 rounded-lg bg-slate-900 text-white text-sm font-semibold shadow-sm hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition">
+          Save <span x-text="mode === 'restock' ? 'Restock' : 'Adjustment'"></span>
+        </button>
+      </footer>
+    </form>
+  </div>
+
+  <!-- Toast -->
+  <div x-show="toast !== ''" x-transition x-cloak class="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl bg-slate-900 text-white px-4 py-3 shadow-xl text-sm">
+    <i data-lucide="check-circle-2" class="w-[18px] h-[18px] text-emerald-400"></i> <span x-text="toast"></span>
+  </div>
+</div>
+
+      <!-- Add Customer Modal -->
+      <div x-show="addCustomerModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+        <div @click.away="addCustomerModal = false" class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="text-base font-bold text-slate-900">Add New Customer</h3>
+            <button type="button" @click="addCustomerModal = false" class="text-slate-400 hover:text-slate-600">
+              <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+          </div>
+          <form @submit.prevent="addCustomerModal = false" class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Full Name</label>
+              <input type="text" placeholder="e.g. Juan dela Cruz" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-slate-900 focus:outline-none" required />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Contact Number</label>
+              <input type="tel" placeholder="09XX XXX XXXX" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-slate-900 focus:outline-none" required />
+            </div>
+            <div class="pt-2 flex items-center justify-end gap-2">
+              <button type="button" @click="addCustomerModal = false" class="px-4 py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition">Cancel</button>
+              <button type="submit" class="px-4 py-2.5 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition">Save Customer</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
     </main>
   </div>
 
@@ -1089,6 +1730,68 @@
       Alpine.effect(() => { lucide.createIcons(); });
     });
   </script>
+
+<!-- print job slip -->
+<div id="print-job-slip" class="hidden print:block">
+
+  <div class="text-center border-b border-dashed border-black pb-3">
+    <h1 class="text-xl font-bold tracking-tight">TahiAn</h1>
+    <p class="font-semibold">Morsons HOME Industries</p>
+    <p>Poblacion, Iligan City</p>
+    <p class="mt-2 text-sm font-bold uppercase tracking-widest">Job Slip</p>
+  </div>
+
+  <div class="py-3 border-b border-dashed border-black">
+    <p class="text-center text-lg font-bold">ORD 1043</p>
+    <dl class="mt-2 space-y-1">
+      <div class="flex justify-between gap-3"><dt>Garment</dt><dd class="font-semibold text-right">School Polo</dd></div>
+      <div class="flex justify-between gap-3"><dt>Order date</dt><dd class="text-right">Oct 28, 2026</dd></div>
+      <div class="flex justify-between gap-3"><dt>Due date</dt><dd class="font-semibold text-right">Oct 28, 2026</dd></div>
+    </dl>
+  </div>
+
+  <div class="py-3 border-b border-dashed border-black">
+    <h2 class="mb-2 font-bold uppercase">Customer & Assignment</h2>
+    <dl class="space-y-1">
+      <div class="flex justify-between gap-3"><dt>Customer</dt><dd class="font-semibold text-right">Lance Sacay</dd></div>
+      <div class="flex justify-between gap-3"><dt>Mobile</dt><dd class="text-right">09116912544</dd></div>
+      <div class="flex justify-between gap-3"><dt>Assigned tailor</dt><dd class="font-semibold text-right">Robert</dd></div>
+    </dl>
+  </div>
+
+  <div class="py-3 border-b border-dashed border-black">
+    <h2 class="mb-2 font-bold uppercase">Measurements — Inches</h2>
+    <table class="w-full">
+      <tbody>
+        <tr><td class="py-0.5">Shoulder</td><td class="text-right font-semibold">17</td><td class="pl-4">Chest</td><td class="text-right font-semibold">38</td></tr>
+        <tr><td class="py-0.5">Length</td><td class="text-right font-semibold">28</td><td class="pl-4">Sleeve</td><td class="text-right font-semibold">9</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="py-3 border-b border-dashed border-black">
+    <h2 class="mb-2 font-bold uppercase">Payment</h2>
+    <dl class="space-y-1">
+      <div class="flex justify-between gap-3"><dt>Total</dt><dd>PHP 2,800</dd></div>
+      <div class="flex justify-between gap-3"><dt>Amount paid</dt><dd>PHP 1,500</dd></div>
+      <div class="flex justify-between gap-3 pt-1 font-bold"><dt>Balance</dt><dd>PHP 1,300</dd></div>
+    </dl>
+  </div>
+
+  <div class="py-3 border-b border-dashed border-black">
+    <h2 class="font-bold uppercase">Tailoring Notes</h2>
+    <div class="h-6 border-b border-black"></div>
+    <div class="h-6 border-b border-black"></div>
+  </div>
+
+  <div class="pt-3 text-center">
+    <img class="block mx-auto w-20 h-20" width="80" height="80" alt="QR code placeholder — not scannable"
+         src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect x='1' y='1' width='98' height='98' fill='white' stroke='black' stroke-dasharray='4 3'/%3E%3Ctext x='50' y='46' text-anchor='middle' font-family='Arial' font-size='18'%3EQR%3C/text%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-size='10'%3EPLACEHOLDER%3C/text%3E%3C/svg%3E" />
+    <p class="mt-1 text-[9px]">QR placeholder — not scannable</p>
+    <p class="mt-3">Please present this slip when collecting your order.</p>
+    <p class="mt-1 font-semibold">Thank you!</p>
+  </div>
+</div>
 
 </body>
 </html>
