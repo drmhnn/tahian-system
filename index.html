@@ -118,6 +118,7 @@
   </div>
 </div>
 
+
   <!-- Left Sidebar -->
   <aside class="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0 print:hidden">
     <div class="h-16 flex items-center px-6 gap-3 border-b border-slate-100">
@@ -135,6 +136,7 @@
          class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition">
         <i data-lucide="home" class="w-4 h-4" :class="currentTab === 'dashboard' ? 'text-white' : 'text-slate-400'"></i> Home (Dashboard)
       </a>
+
 
       <a href="#" @click.prevent="currentTab = 'orders'"
    :class="['orders','order_details','create_order'].includes(currentTab) ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
@@ -198,7 +200,7 @@
 
     <!-- Main Container -->
     <main class="flex-1 p-8 max-w-7xl w-full mx-auto">
-
+      
 <!-- SCREEN 1: Dashboard -->
       <div x-show="currentTab === 'dashboard'" x-cloak>
         
@@ -343,362 +345,685 @@
 
       </div>
 
-
-
-      <!-- SCREEN 4: Production Kanban -->
-      <div x-show="currentTab === 'kanban'" x-cloak x-data="{ tailorFilter: 'All' }">
-        
-        <!-- Page Header -->
-        <div class="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-          <div>
-            <p class="text-xs font-medium text-slate-500">Workflow <span class="text-slate-300">/</span> <span class="text-slate-700">Production board</span></p>
-            <h1 class="text-2xl font-semibold tracking-tight mt-1">Production</h1>
-          </div>
-
-          <!-- Filter Of Tailors -->
-          <div class="flex flex-wrap items-center gap-1 p-1 rounded-lg bg-white border border-slate-200 shadow-sm">
-            <!-- All -->
-            <button type="button" @click="tailorFilter = 'All'"
-              :class="tailorFilter === 'All' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
-              class="inline-flex items-center gap-2 h-8 px-3 rounded-md text-sm font-medium transition">
-              All
-            </button>
-            
-            <!-- Unassigned -->
-            <button type="button" @click="tailorFilter = 'Unassigned'"
-              :class="tailorFilter === 'Unassigned' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
-              class="inline-flex items-center gap-2 h-8 px-3 rounded-md text-sm font-medium transition">
-              <i data-lucide="user-x" class="w-3.5 h-3.5"></i> Unassigned
-            </button>
-            
-            <!-- Robert -->
-            <button type="button" @click="tailorFilter = 'Robert'"
-              :class="tailorFilter === 'Robert' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
-              class="inline-flex items-center gap-2 h-8 px-3 rounded-md text-sm font-medium transition">
-              <span class="grid place-items-center w-5 h-5 rounded-full text-[10px] font-semibold ring-1 bg-sky-100 text-sky-800 ring-sky-200">R</span> Robert
-            </button>
-            
-            <!-- Ana -->
-            <button type="button" @click="tailorFilter = 'Ana'"
-              :class="tailorFilter === 'Ana' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
-              class="inline-flex items-center gap-2 h-8 px-3 rounded-md text-sm font-medium transition">
-              <span class="grid place-items-center w-5 h-5 rounded-full text-[10px] font-semibold ring-1 bg-violet-100 text-violet-800 ring-violet-200">A</span> Ana
-            </button>
-          </div>
-        </div>
-
-        <!-- Kanban Board Columns -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-          
-          <!-- Column 1: In Progress -->
-          <section class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col md:min-h-[420px]">
-            <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
-              <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="clock" class="w-4 h-4"></i></span>
-              <div class="flex-1 min-w-0">
-                <h2 class="text-[15px] font-semibold leading-tight flex items-center gap-2">
-                  In Progress
-                </h2>
-                <p class="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
-                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Active production
-                </p>
-              </div>
-            </header>
-            
-            <div class="flex-1 p-4 space-y-3 bg-slate-50/60 rounded-b-xl">
-
-              <!-- BOX: ORD 1043 -->
-              <article x-show="tailorFilter === 'All' || tailorFilter === 'Robert'" @click="currentTab = 'order_details'"
-                class="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 transition hover:border-slate-300 hover:shadow-md cursor-pointer">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="min-w-0">
-                    <p class="text-base font-bold tracking-tight text-slate-900 tabular">ORD 1043</p>
-                    <p class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-800">
-                      <i data-lucide="shirt" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> <span class="truncate">School Polo</span>
-                    </p>
-                  </div>
-                  <span class="grid place-items-center w-8 h-8 rounded-full text-xs font-semibold ring-1 bg-sky-100 text-sky-800 ring-sky-200">R</span>
-                </div>
-                <p class="mt-2 flex items-center gap-1.5 text-[13px] text-slate-500 truncate">
-                  <i data-lucide="user" class="w-3.5 h-3.5 shrink-0"></i> Lance Sacay
-                </p>
-                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <span class="inline-flex items-center gap-1.5 text-xs text-slate-500">
-                    <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Today
-                  </span>
-                  <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-inset ring-slate-200 tabular">PHP 1,300 Balance</span>
-                </div>
-              </article>
-
-              <!-- BOX: ORD 1042 -->
-              <article x-show="tailorFilter === 'All' || tailorFilter === 'Ana'" @click="currentTab = 'order_details'"
-                class="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 transition hover:border-slate-300 hover:shadow-md cursor-pointer">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="min-w-0">
-                    <p class="text-base font-bold tracking-tight text-slate-900 tabular">ORD 1042</p>
-                    <p class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-800">
-                      <i data-lucide="shirt" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> <span class="truncate">Uniform</span>
-                    </p>
-                  </div>
-                  <span class="grid place-items-center w-8 h-8 rounded-full text-xs font-semibold ring-1 bg-violet-100 text-violet-800 ring-violet-200">A</span>
-                </div>
-                <p class="mt-2 flex items-center gap-1.5 text-[13px] text-slate-500 truncate">
-                  <i data-lucide="user" class="w-3.5 h-3.5 shrink-0"></i> Maria Santos
-                </p>
-                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <span class="inline-flex items-center gap-1.5 text-xs text-slate-500">
-                    <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Today
-                  </span>
-                  <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-inset ring-slate-200 tabular">PHP 800 Balance</span>
-                </div>
-              </article>
-            </div>
-          </section>
-
-          <!-- Column 2: Ready for Pick up -->
-          <section class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col md:min-h-[420px]">
-            <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
-              <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="package-check" class="w-4 h-4"></i></span>
-              <div class="flex-1 min-w-0">
-                <h2 class="text-[15px] font-semibold leading-tight flex items-center gap-2">
-                  Ready for Pick up
-                </h2>
-                <p class="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
-                  <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span> Ready for customer
-                </p>
-              </div>
-            </header>
-            
-            <div class="flex-1 p-4 space-y-3 bg-slate-50/60 rounded-b-xl">
-              <!-- BOX: ORD 1041 -->
-              <article x-show="tailorFilter === 'All' || tailorFilter === 'Robert'" @click="currentTab = 'order_details'"
-                class="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 transition hover:border-slate-300 hover:shadow-md cursor-pointer">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="min-w-0">
-                    <p class="text-base font-bold tracking-tight text-slate-900 tabular">ORD 1041</p>
-                    <p class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-800">
-                      <i data-lucide="shirt" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> <span class="truncate">School Uniform</span>
-                    </p>
-                  </div>
-                  <span class="grid place-items-center w-8 h-8 rounded-full text-xs font-semibold ring-1 bg-sky-100 text-sky-800 ring-sky-200">R</span>
-                </div>
-                <p class="mt-2 flex items-center gap-1.5 text-[13px] text-slate-500 truncate">
-                  <i data-lucide="user" class="w-3.5 h-3.5 shrink-0"></i> Daniel Migz
-                </p>
-                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <span class="inline-flex items-center gap-1.5 text-xs text-slate-500">
-                    <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Today
-                  </span>
-                  <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-200">
-                    <i data-lucide="check-circle-2" class="w-3 h-3 stroke-[2.5]"></i> Paid
-                  </span>
-                </div>
-              </article>
-            </div>
-          </section>
-
-          <!-- Column 3: Claimed -->
-          <section class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col md:min-h-[420px]">
-            <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
-              <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="circle-check-big" class="w-4 h-4"></i></span>
-              <div class="flex-1 min-w-0">
-                <h2 class="text-[15px] font-semibold leading-tight flex items-center gap-2">
-                  Claimed
-                </h2>
-                <p class="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Completed orders
-                </p>
-              </div>
-            </header>
-            
-            <div class="flex-1 p-4 space-y-3 bg-slate-50/60 rounded-b-xl">
-              <!-- BOX: ORD 1040 -->
-              <article x-show="tailorFilter === 'All' || tailorFilter === 'Ana'" @click="currentTab = 'order_details'"
-                class="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 transition hover:border-slate-300 hover:shadow-md cursor-pointer">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="min-w-0">
-                    <p class="text-base font-bold tracking-tight text-slate-900 tabular">ORD 1040</p>
-                    <p class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-800">
-                      <i data-lucide="shirt" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> <span class="truncate">School Uniform</span>
-                    </p>
-                  </div>
-                  <span class="grid place-items-center w-8 h-8 rounded-full text-xs font-semibold ring-1 bg-violet-100 text-violet-800 ring-violet-200">A</span>
-                </div>
-                <p class="mt-2 flex items-center gap-1.5 text-[13px] text-slate-500 truncate">
-                  <i data-lucide="user" class="w-3.5 h-3.5 shrink-0"></i> Jon Berd
-                </p>
-                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <span class="inline-flex items-center gap-1.5 text-xs text-slate-500">
-                    <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Oct 20
-                  </span>
-                  <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-200">
-                    <i data-lucide="check-circle-2" class="w-3 h-3 stroke-[2.5]"></i> Paid
-                  </span>
-                </div>
-              </article>
-
-              <!-- BOX: ORD 1039 -->
-              <article x-show="tailorFilter === 'All' || tailorFilter === 'Unassigned'" @click="currentTab = 'order_details'"
-                class="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 transition hover:border-slate-300 hover:shadow-md cursor-pointer">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="min-w-0">
-                    <p class="text-base font-bold tracking-tight text-slate-900 tabular">ORD 1039</p>
-                    <p class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-800">
-                      <i data-lucide="shirt" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> <span class="truncate">PE Uniform × 30</span>
-                    </p>
-                  </div>
-                  <span class="grid place-items-center w-8 h-8 rounded-full border border-dashed border-slate-300 bg-white text-slate-400 text-xs"><i data-lucide="user-x" class="w-3.5 h-3.5"></i></span>
-                </div>
-                <p class="mt-2 flex items-center gap-1.5 text-[13px] text-slate-500 truncate">
-                  <i data-lucide="user" class="w-3.5 h-3.5 shrink-0"></i> MSU IIT
-                </p>
-                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <span class="inline-flex items-center gap-1.5 text-xs text-slate-500">
-                    <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Oct 5
-                  </span>
-                  <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-200">
-                    <i data-lucide="check-circle-2" class="w-3 h-3 stroke-[2.5]"></i> Paid
-                  </span>
-                </div>
-              </article>
-            </div>
-          </section>
-
-        </div>
-
-      </div>
-
-<!-- SCREEN 5: Customers Page -->
-      <div x-show="currentTab === 'customers'" x-cloak 
-           x-data="{ 
-             searchQuery: '', 
-             filterType: 'All',
+<!-- SCREEN 2: Create Order -->
+      <div x-show="currentTab === 'create_order'" x-cloak
+           x-data="{
+             customer: 1, customerSearch: '', customerDropdownOpen: false,
+             garment: 'School Uniform', tailor: 'Robert', recordId: 'r1',
+             m: { chest: '34.0', shoulder: '15.0', length: '26.0', sleeve: '8.0' },
+             notes: '', total: 2800, down: 1500, method: 'Cash', toastMessage: '',
              customers: [
-               { id: 'C-0001', name: 'Lance Sacay', mobile: '09271251255', type: 'Individual', measurements: 'Recorded', orders: 1, initials: 'LS', color: 'bg-slate-900 text-white' },
-               { id: 'C-0002', name: 'MSU IIT', mobile: '09121512616', type: 'Bulk', measurements: 'Per Size', orders: 4, initials: 'MI', color: 'bg-violet-100 text-violet-800' },
-               { id: 'C-0003', name: 'Jon Berd', mobile: '09682951862', type: 'Individual', measurements: 'Recorded', orders: 2, initials: 'JB', color: 'bg-slate-900 text-white' },
-               { id: 'C-0004', name: 'Maria Santos', mobile: '09175550142', type: 'Individual', measurements: 'Recorded', orders: 1, initials: 'MS', color: 'bg-slate-900 text-white' },
-               { id: 'C-0005', name: 'Daniel Migz', mobile: '09284410923', type: 'Individual', measurements: 'Unrecorded', orders: 1, initials: 'DM', color: 'bg-slate-900 text-white' }
+               { id: 1, name: 'Lance Sacay', phone: '09116912544', initials: 'LS', color: 'bg-slate-900 text-white' },
+               { id: 2, name: 'Kit Malubay', phone: '09171234567', initials: 'KM', color: 'bg-sky-100 text-sky-700' },
+               { id: 3, name: 'Saleh Hadjicosain', phone: '09281234567', initials: 'SH', color: 'bg-violet-100 text-violet-700' }
              ],
-             get filteredCustomers() {
-               const term = this.searchQuery.trim().toLowerCase().replace(/\s+/g, '');
-               return this.customers.filter(c => 
-                 (this.filterType === 'All' || c.type === this.filterType) &&
-                 (!term || c.name.toLowerCase().replace(/\s+/g, '').includes(term) || c.mobile.includes(term) || c.id.toLowerCase().includes(term))
-               );
+             get balance() { return Math.max((parseFloat(this.total) || 0) - (parseFloat(this.down) || 0), 0); },
+             get downError() { return (parseFloat(this.down) || 0) > (parseFloat(this.total) || 0); },
+             get canSubmit() { return this.customer && (parseFloat(this.total) || 0) > 0 && !this.downError; },
+             filteredCustomers() { return this.customers.filter(c => (c.name + c.phone).toLowerCase().includes(this.customerSearch.toLowerCase())); },
+             selectedCustomer() { return this.customers.find(c => c.id === this.customer); },
+             peso(n) { return 'PHP ' + (Number(n) || 0).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); },
+             pickRecord(id) {
+               this.recordId = id;
+               if (id === 'r1') this.m = { chest: '34.0', shoulder: '15.0', length: '26.0', sleeve: '8.0' };
+               if (id === 'r2') this.m = { chest: '33.0', shoulder: '14.5', length: '25.5', sleeve: '7.5' };
              },
-             formatPhone(n) { return `${n.slice(0, 4)} ${n.slice(4, 7)} ${n.slice(7)}`; }
+             submitOrder() {
+               if (!this.canSubmit) return;
+               const c = this.selectedCustomer();
+               this.toastMessage = `Order created for ${c.name} — balance ${this.peso(this.balance)}`;
+               setTimeout(() => this.toastMessage = '', 3500);
+               setTimeout(() => this.currentTab = 'kanban', 1500);
+             }
            }">
-        
-        <!-- Page Header -->
-        <div class="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-          <div>
-            <p class="text-xs font-medium text-slate-500">Customer <span class="text-slate-300">/</span> <span class="text-slate-700">Directory</span></p>
-            <h1 class="text-2xl font-semibold tracking-tight mt-1">Customers</h1>
-          </div>
-          <button type="button" @click="addCustomerModal = true" class="h-10 px-4 rounded-lg bg-slate-900 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm hover:bg-slate-800 active:bg-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-900 transition self-start sm:self-auto">
-            <i data-lucide="user-plus" class="w-4 h-4"></i> Add Customer
-          </button>
+
+        <div class="mb-6">
+          <p class="text-xs font-medium text-slate-500 flex items-center gap-1.5">Orders <span class="text-slate-300">/</span> <span class="text-slate-700">New order</span></p>
+          <h1 class="text-2xl font-semibold tracking-tight mt-1">Create New Order</h1>
         </div>
 
-        <!-- Main Container Background -->
-        <section class="bg-white rounded-xl border border-slate-200 shadow-sm">
-          
-          <!-- Search and filter bar -->
-          <div class="flex flex-col md:flex-row md:items-center gap-3 px-5 py-4 border-b border-slate-100">
-            <div class="relative flex-1">
-              <i data-lucide="search" class="w-[17px] h-[17px] absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
-              <input type="search" x-model="searchQuery" placeholder="Search by name or mobile number..." aria-label="Search customers" class="w-full h-11 rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-500 transition" />
-            </div>
-            <div role="tablist" aria-label="Filter by customer type" class="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 self-start md:self-auto">
-              <button role="tab" @click="filterType = 'All'" :class="filterType === 'All' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'" class="h-9 px-3.5 rounded-md text-sm font-medium transition">All</button>
-              <button role="tab" @click="filterType = 'Individual'" :class="filterType === 'Individual' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'" class="h-9 px-3.5 rounded-md text-sm font-medium transition">Individual</button>
-              <button role="tab" @click="filterType = 'Bulk'" :class="filterType === 'Bulk' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'" class="h-9 px-3.5 rounded-md text-sm font-medium transition">Bulk</button>
-            </div>
-          </div>
+        <form @submit.prevent="submitOrder" class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start">
+          <div class="space-y-6 min-w-0">
 
-          <!-- Table -->
-          <div class="overflow-x-auto">
-            <table class="min-w-full text-sm">
-              <thead class="bg-slate-50 border-b border-slate-100">
-                <tr>
-                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Customer</th>
-                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Mobile</th>
-                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Type</th>
-                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Measurements</th>
-                  <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Orders</th>
-                  <th class="w-10" aria-hidden="true"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <template x-for="c in filteredCustomers" :key="c.id">
-                  <tr @click="currentTab = 'customer_profile'" tabindex="0" class="group border-b border-slate-100 last:border-b-0 hover:bg-slate-50/80 focus:bg-slate-50 focus:outline-none transition cursor-pointer">
-                    <td class="px-5 py-4 whitespace-nowrap">
-                      <div class="flex items-center gap-3">
-                        <span :class="c.color" class="grid place-items-center w-9 h-9 rounded-full text-xs font-semibold shrink-0" x-text="c.initials"></span>
-                        <div class="leading-tight">
-                          <p class="font-semibold text-slate-900" x-text="c.name"></p>
-                          <p class="mt-0.5 text-xs text-slate-500 tabular" x-text="c.id"></p>
+            <!-- Customer Information -->
+            <section class="bg-white rounded-xl border border-slate-200 shadow-sm">
+              <header class="flex items-center gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
+                <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="user" class="w-[18px] h-[18px]"></i></span>
+                <div>
+                  <h2 class="text-[15px] font-semibold text-slate-900 leading-tight">Customer Information</h2>
+                  <p class="text-xs text-slate-500 mt-0.5">Who is this order for?</p>
+                </div>
+              </header>
+              <div class="p-6">
+                <label class="block text-sm font-medium text-slate-700 mb-1.5">Customer</label>
+                <div class="relative" @click.outside="customerDropdownOpen = false">
+                  <button type="button" @click="customerDropdownOpen = !customerDropdownOpen" class="w-full h-12 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 transition focus:outline-none focus:ring-2 focus:ring-slate-900/10 flex items-center gap-3 text-left">
+                  
+                    <!-- Selected Customer Icon -->
+                    <template x-if="selectedCustomer()">
+                      <span :class="selectedCustomer().color" class="grid place-items-center w-7 h-7 rounded-full text-[11px] font-semibold shrink-0" x-text="selectedCustomer().initials"></span>
+                    </template>
+                    <template x-if="!selectedCustomer()">
+                      <span class="grid place-items-center w-7 h-7 rounded-full bg-slate-900 text-white text-[11px] font-semibold shrink-0"><i data-lucide="user" class="w-3.5 h-3.5"></i></span>
+                    </template>
+                  
+                    <!-- Selected Customer Text -->
+                    <span class="flex-1 min-w-0">
+                      <template x-if="selectedCustomer()">
+                        <span class="flex flex-wrap items-baseline gap-x-2">
+                          <span class="font-medium text-slate-900" x-text="selectedCustomer().name"></span>
+                          <span class="text-slate-500 tabular" x-text="selectedCustomer().phone"></span>
+                        </span>
+                      </template>
+                      <template x-if="!selectedCustomer()">
+                        <span class="text-slate-400">Select a customer</span>
+                      </template>
+                    </span>
+                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition" :class="customerDropdownOpen ? 'rotate-180' : ''"></i>
+                  </button>
+
+                  <!-- Search Dropdown -->
+                  <div x-show="customerDropdownOpen" x-transition class="absolute z-20 mt-2 w-full rounded-lg border border-slate-200 bg-white shadow-lg overflow-hidden" style="display: none;">
+                    <div class="p-2 border-b border-slate-100 relative">
+                      <i data-lucide="search" class="w-4 h-4 absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                      <input type="text" x-model="customerSearch" placeholder="Search name or mobile number" class="w-full h-9 rounded-md bg-slate-50 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10" />
+                    </div>
+                    <ul class="max-h-56 overflow-auto py-1">
+                      <template x-for="c in filteredCustomers()" :key="c.id">
+                        <li>
+                          <button type="button" @click="customer = c.id; customerDropdownOpen = false; customerSearch = ''" class="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-slate-50 transition">
+                            <span><span class="font-medium" x-text="c.name"></span> <span class="text-slate-500 tabular ml-1" x-text="c.phone"></span></span>
+                            <i data-lucide="check" x-show="customer === c.id" class="w-[15px] h-[15px] text-slate-900"></i>
+                          </button>
+                        </li>
+                      </template>
+                      <template x-if="filteredCustomers().length === 0">
+                        <li class="px-3 py-3 text-sm text-slate-500">No matching customer.</li>
+                      </template>
+                    </ul>
+                  </div>
+                </div>
+                <p class="mt-2.5 text-xs text-slate-500">
+                  Not listed? <a href="#" @click.prevent="addCustomerModal = true" class="inline-flex items-center gap-1 font-medium text-slate-900 hover:underline"><i data-lucide="user-plus" class="w-[13px] h-[13px]"></i> Add a new customer</a>
+                </p>
+              </div>
+            </section>
+
+            <!-- Measurements -->
+            <section class="bg-white rounded-xl border border-slate-200 shadow-sm">
+              <header class="flex items-center gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
+                <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="shirt" class="w-[18px] h-[18px]"></i></span>
+                <div>
+                  <h2 class="text-[15px] font-semibold text-slate-900 leading-tight">Garment & Measurements</h2>
+                  <p class="text-xs text-slate-500 mt-0.5">What are we making, and to what size?</p>
+                </div>
+              </header>
+              <div class="p-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Garment Type</label>
+                    <div class="relative">
+                      <i data-lucide="shirt" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                      <select x-model="garment" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 pl-9 pr-9 text-sm text-slate-900 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-900/10">
+                        <option>School Uniform</option><option>Barong</option><option>Polo</option><option>Pants</option><option>Dress</option>
+                      </select>
+                      <i data-lucide="chevron-down" class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Assigned Tailor</label>
+                    <div class="relative">
+                      <i data-lucide="scissors" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                      <select x-model="tailor" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 pl-9 pr-9 text-sm text-slate-900 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-900/10">
+                        <option>Robert</option><option>Maria</option><option>Jun</option>
+                      </select>
+                      <i data-lucide="chevron-down" class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Measurement Record -->
+                <div class="mt-6 pt-6 border-t border-slate-100">
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">Measurement Record</label>
+                  <div class="relative">
+                    <i data-lucide="calendar-days" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                    <select @change="pickRecord($event.target.value)" :value="recordId" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 pl-9 pr-9 text-sm text-slate-900 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-900/10">
+                      <option value="r1">Oct 20, 2026 — Chest 34, Shoulder 15 (Saved)</option>
+                      <option value="r2">Jun 03, 2026 — Chest 33, Shoulder 14.5 (Saved)</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                  </div>
+
+                  <div class="mt-4 rounded-lg bg-slate-50 border border-slate-200 p-4 sm:p-5">
+                    <div class="flex items-center gap-2 mb-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <i data-lucide="ruler" class="w-3.5 h-3.5"></i> Body measurements
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-5 gap-y-4">
+                      <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Chest</label>
+                        <div class="relative">
+                          <input type="number" step="0.5" x-model="m.chest" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 pr-12 text-sm text-slate-900 tabular focus:outline-none focus:ring-2 focus:ring-slate-900/10">
+                          <span class="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">in</span>
                         </div>
                       </div>
-                    </td>
-                    <td class="px-5 py-4 whitespace-nowrap text-slate-700 tabular">
-                      <span class="inline-flex items-center gap-1.5"><i data-lucide="phone" class="w-[13px] h-[13px] text-slate-400"></i> <span x-text="formatPhone(c.mobile)"></span></span>
-                    </td>
-                    <td class="px-5 py-4 whitespace-nowrap">
-                      <template x-if="c.type === 'Bulk'">
-                        <span class="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700 ring-1 ring-inset ring-violet-200">
-                          <i data-lucide="building-2" class="w-3 h-3 stroke-[2.25]"></i> Bulk
-                        </span>
-                      </template>
-                      <template x-if="c.type === 'Individual'">
-                        <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-slate-200">
-                          <i data-lucide="user-round" class="w-3 h-3 stroke-[2.25]"></i> Individual
-                        </span>
-                      </template>
-                    </td>
-                    <td class="px-5 py-4 whitespace-nowrap">
-                      <template x-if="c.measurements === 'Recorded'">
-                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
-                          <i data-lucide="check-circle-2" class="w-3 h-3 stroke-[2.5]"></i> Recorded
-                        </span>
-                      </template>
-                      <template x-if="c.measurements === 'Per Size'">
-                        <span class="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 ring-1 ring-inset ring-sky-200">
-                          <i data-lucide="ruler" class="w-3 h-3 stroke-[2.25]"></i> Per Size
-                        </span>
-                      </template>
-                      <template x-if="c.measurements === 'Unrecorded'">
-                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
-                          <i data-lucide="circle-dashed" class="w-3 h-3 stroke-[2.5]"></i> Unrecorded
-                        </span>
-                      </template>
-                    </td>
-                    <td class="px-5 py-4 whitespace-nowrap text-right">
-                      <span class="inline-flex min-w-[2rem] justify-center rounded-md bg-slate-100 px-2 py-0.5 text-sm font-semibold text-slate-800 tabular" x-text="c.orders"></span>
-                    </td>
-                    <td class="pr-4 text-slate-300 group-hover:text-slate-500 transition">
-                      <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                    </td>
-                  </tr>
-                </template>
+                      <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Shoulder</label>
+                        <div class="relative">
+                          <input type="number" step="0.5" x-model="m.shoulder" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 pr-12 text-sm text-slate-900 tabular focus:outline-none focus:ring-2 focus:ring-slate-900/10">
+                          <span class="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">in</span>
+                        </div>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Length</label>
+                        <div class="relative">
+                          <input type="number" step="0.5" x-model="m.length" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 pr-12 text-sm text-slate-900 tabular focus:outline-none focus:ring-2 focus:ring-slate-900/10">
+                          <span class="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">in</span>
+                        </div>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Sleeve</label>
+                        <div class="relative">
+                          <input type="number" step="0.5" x-model="m.sleeve" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 pr-12 text-sm text-slate-900 tabular focus:outline-none focus:ring-2 focus:ring-slate-900/10">
+                          <span class="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">in</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-                <!-- Empty State (No matching records) -->
-                <tr x-show="filteredCustomers.length === 0" style="display: none;">
-                  <td colspan="6" class="px-5 py-14 text-center">
-                    <i data-lucide="search-x" class="mx-auto w-[22px] h-[22px] text-slate-400"></i>
-                    <p class="mt-2 text-sm font-medium text-slate-700">No customers match "<span x-text="searchQuery"></span>"</p>
-                    <p class="text-xs text-slate-500 mt-0.5">Try a different name or mobile number, or add a new customer.</p>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                <!-- Design Notes -->
+                <div class="mt-6 pt-6 border-t border-slate-100">
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5"><span class="inline-flex items-center gap-1.5"><i data-lucide="notebook-pen" class="w-3.5 h-3.5 text-slate-400"></i> Design Notes</span></label>
+                  <textarea rows="4" x-model="notes" placeholder="Instructions..." class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 resize-y focus:outline-none focus:ring-2 focus:ring-slate-900/10"></textarea>
+                </div>
+              </div>
+            </section>
           </div>
 
-          <footer class="flex items-center justify-between px-5 py-3 border-t border-slate-100 text-xs text-slate-500">
-            <span>Showing <span class="font-semibold text-slate-700 tabular" x-text="filteredCustomers.length"></span> of <span class="tabular" x-text="customers.length"></span> customers</span>
-            <span class="hidden sm:inline">Click a row to view the customer profile</span>
-          </footer>
-        </section>
+          <!-- Sidebar Payment -->
+          <aside class="lg:sticky lg:top-24">
+            <section class="bg-white rounded-xl border border-slate-200 shadow-sm">
+              <header class="flex items-center gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
+                <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="wallet" class="w-[18px] h-[18px]"></i></span>
+                <div>
+                  <h2 class="text-[15px] font-semibold text-slate-900 leading-tight">Payment</h2>
+                  <p class="text-xs text-slate-500 mt-0.5">Down payment and balance</p>
+                </div>
+              </header>
+              <div class="p-6">
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Total Price</label>
+                    <div class="relative">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-500">PHP</span>
+                      <input type="number" min="0" step="50" x-model="total" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 pl-12 text-sm text-slate-900 font-medium tabular focus:outline-none focus:ring-2 focus:ring-slate-900/10">
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Down payment</label>
+                    <div class="relative">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-500">PHP</span>
+                      <input type="number" min="0" step="50" x-model="down" :class="downError ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/10' : 'border-slate-300 focus:ring-slate-900/10'" class="w-full h-10 rounded-lg border bg-white px-3 pl-12 text-sm text-slate-900 font-medium tabular focus:outline-none focus:ring-2">
+                    </div>
+                    <p x-show="downError" class="mt-1.5 text-xs text-rose-600" style="display: none;">Down payment cannot exceed total price.</p>
+                  </div>
+                  <div>
+                    <span class="block text-sm font-medium text-slate-700 mb-1.5">Payment Method</span>
+                    <div class="grid grid-cols-2 gap-1 p-1 rounded-lg bg-slate-100">
+                      <button type="button" @click="method = 'Cash'" :class="method === 'Cash' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'" class="flex items-center justify-center gap-2 h-9 rounded-md text-sm font-medium transition">
+                        <i data-lucide="banknote" class="w-[15px] h-[15px]"></i> Cash
+                      </button>
+                      <button type="button" @click="method = 'Gcash'" :class="method === 'Gcash' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'" class="flex items-center justify-center gap-2 h-9 rounded-md text-sm font-medium transition">
+                        <i data-lucide="smartphone" class="w-[15px] h-[15px]"></i> Gcash
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <dl class="mt-6 pt-5 border-t border-dashed border-slate-200 space-y-2.5 text-sm tabular">
+                  <div class="flex justify-between"><dt class="text-slate-500">Total</dt><dd class="font-medium" x-text="peso(total)"></dd></div>
+                  <div class="flex justify-between"><dt class="text-slate-500">Down payment</dt><dd class="font-medium text-emerald-700" x-text="'-' + peso(down)"></dd></div>
+                </dl>
+                <div class="mt-4 rounded-lg bg-slate-900/[0.04] border border-slate-200 px-4 py-3.5 flex items-center justify-between">
+                  <span class="text-sm font-semibold text-slate-700">Remaining Balance</span>
+                  <span class="text-xl font-bold tracking-tight tabular" x-text="peso(balance)"></span>
+                </div>
+
+                <button type="submit" :disabled="!canSubmit" :class="!canSubmit ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-800 active:bg-slate-950'" class="mt-6 w-full h-11 rounded-lg bg-slate-900 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm focus:outline-none transition">
+                  <i data-lucide="check" class="w-4 h-4 stroke-[2.5]"></i> Create Order
+                </button>
+                <button type="button" @click="currentTab = 'orders'" class="mt-2 w-full h-10 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+                  Cancel
+                </button>
+              </div>
+            </section>
+          </aside>
+        </form>
+        
+        <!-- Notification -->
+        <div x-show="toastMessage !== ''" x-transition x-cloak class="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl bg-slate-900 text-white px-4 py-3 shadow-xl text-sm">
+          <i data-lucide="check-circle-2" class="w-[18px] h-[18px] text-emerald-400"></i> <span x-text="toastMessage"></span>
+        </div>
+      </div>
+
+      <!-- SCREEN: Orders  -->
+<div x-show="currentTab === 'orders'" x-cloak
+     x-data="{
+       stage: 'All', due: 'Any', tailor: 'All',
+       tc: { Robert: 'bg-sky-100 text-sky-800 ring-sky-200', Ana: 'bg-violet-100 text-violet-800 ring-violet-200' },
+       orders: [
+         { id: 'ORD 1043', customer: 'Lance Sacay', garment: 'School Polo', due: 'Today', dueType: 'Today', stage: 'In Progress', pay: 'Unpaid', tailor: 'Robert' },
+         { id: 'ORD 1042', customer: 'Maria Santos', garment: 'School Uniform', due: 'Today', dueType: 'Today', stage: 'In Progress', pay: 'Unpaid', tailor: 'Robert' },
+         { id: 'ORD 1041', customer: 'Daniel Migz', garment: 'School Uniform', due: 'Today', dueType: 'Today', stage: 'Ready', pay: 'Paid', tailor: 'Ana' },
+         { id: 'ORD 1040', customer: 'Jon Berd', garment: 'School Uniform', due: 'Oct 20', dueType: 'Earlier', stage: 'Claimed', pay: 'Paid', tailor: 'Ana' },
+         { id: 'ORD 1039', customer: 'MSU IIT', garment: 'PE Uniform × 30', due: 'Oct 5', dueType: 'Earlier', stage: 'Claimed', pay: 'Paid', tailor: '' }
+       ],
+       get filteredOrders() {
+         return this.orders.filter(o =>
+           (this.stage === 'All' || o.stage === this.stage) &&
+           (this.due === 'Any' || o.dueType === this.due) &&
+           (this.tailor === 'All' || (this.tailor === 'Unassigned' ? !o.tailor : o.tailor === this.tailor))
+         );
+       }
+     }">
+
+  <!-- Page Header -->
+  <div class="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+    <div>
+      <p class="text-xs font-medium text-slate-500">Orders <span class="text-slate-300">/</span> <span class="text-slate-700">All orders</span></p>
+      <h1 class="text-2xl font-semibold tracking-tight mt-1">Orders</h1>
+    </div>
+    <div class="flex items-center gap-2">
+      <button type="button" @click="addCustomerModal = true" class="h-10 px-4 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 inline-flex items-center gap-2 shadow-sm hover:bg-slate-50 hover:text-slate-900 transition">
+        <i data-lucide="user-plus" class="w-4 h-4"></i> Add Customer
+      </button>
+      <button type="button" @click="currentTab = 'create_order'" class="h-10 px-4 rounded-lg bg-slate-900 text-white text-sm font-semibold inline-flex items-center gap-2 shadow-sm hover:bg-slate-800 active:bg-slate-950 transition">
+        <i data-lucide="plus" class="w-4 h-4 stroke-[2.5]"></i> New Order
+      </button>
+    </div>
+  </div>
+
+  <section class="bg-white rounded-xl border border-slate-200 shadow-sm">
+
+    <!-- Filter bar -->
+    <div class="flex flex-col lg:flex-row lg:items-center gap-3 px-5 py-4 border-b border-slate-100">
+      <div role="tablist" class="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 self-start">
+        <button role="tab" @click="stage = 'All'" :class="stage === 'All' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'" class="h-9 px-3.5 rounded-md text-sm font-medium transition">All</button>
+        <button role="tab" @click="stage = 'In Progress'" :class="stage === 'In Progress' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'" class="h-9 px-3.5 rounded-md text-sm font-medium transition whitespace-nowrap">In Progress</button>
+        <button role="tab" @click="stage = 'Ready'" :class="stage === 'Ready' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'" class="h-9 px-3.5 rounded-md text-sm font-medium transition whitespace-nowrap">Ready for Pickup</button>
+        <button role="tab" @click="stage = 'Claimed'" :class="stage === 'Claimed' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'" class="h-9 px-3.5 rounded-md text-sm font-medium transition">Claimed</button>
+      </div>
+
+      <div class="relative lg:ml-auto">
+        <i data-lucide="calendar-days" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+        <select x-model="due" class="h-10 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-9 text-sm text-slate-900 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-900/10">
+          <option value="Any">Any due date</option><option value="Today">Due today</option><option value="Earlier">Earlier dates</option>
+        </select>
+        <i data-lucide="chevron-down" class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+      </div>
+
+      <div class="relative">
+        <i data-lucide="scissors" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+        <select x-model="tailor" class="h-10 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-9 text-sm text-slate-900 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-900/10">
+          <option value="All">All Tailors</option><option>Robert</option><option>Ana</option><option>Unassigned</option>
+        </select>
+        <i data-lucide="chevron-down" class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-slate-50 border-b border-slate-100">
+          <tr>
+            <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Order ID</th>
+            <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Customer</th>
+            <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Garment Type</th>
+            <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Due Date</th>
+            <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Stage</th>
+            <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Payment</th>
+            <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Assigned To</th>
+            <th class="w-10" aria-hidden="true"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="o in filteredOrders" :key="o.id">
+            <tr @click="currentTab = 'order_details'" tabindex="0" class="group border-b border-slate-100 last:border-b-0 hover:bg-slate-50/80 focus:bg-slate-50 focus:outline-none transition cursor-pointer">
+              <td class="px-5 py-4 whitespace-nowrap font-semibold text-slate-900 tabular" x-text="o.id"></td>
+              <td class="px-5 py-4 whitespace-nowrap font-medium text-slate-800" x-text="o.customer"></td>
+              <td class="px-5 py-4 whitespace-nowrap text-slate-700" x-text="o.garment"></td>
+              <td class="px-5 py-4 whitespace-nowrap text-slate-700" x-text="o.due"></td>
+              <td class="px-5 py-4 whitespace-nowrap">
+                <template x-if="o.stage === 'In Progress'">
+                  <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset bg-amber-50 text-amber-700 ring-amber-200"><i data-lucide="clock" class="w-3 h-3 stroke-[2.5]"></i> In Progress</span>
+                </template>
+                <template x-if="o.stage === 'Ready'">
+                  <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset bg-sky-50 text-sky-700 ring-sky-200"><i data-lucide="package-check" class="w-3 h-3 stroke-[2.5]"></i> Ready</span>
+                </template>
+                <template x-if="o.stage === 'Claimed'">
+                  <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset bg-emerald-50 text-emerald-700 ring-emerald-200"><i data-lucide="circle-check-big" class="w-3 h-3 stroke-[2.5]"></i> Claimed</span>
+                </template>
+              </td>
+              <td class="px-5 py-4 whitespace-nowrap">
+                <template x-if="o.pay === 'Paid'">
+                  <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset bg-emerald-50 text-emerald-700 ring-emerald-200"><i data-lucide="check-circle-2" class="w-3 h-3 stroke-[2.5]"></i> Paid</span>
+                </template>
+                <template x-if="o.pay === 'Unpaid'">
+                  <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset bg-rose-50 text-rose-700 ring-rose-200"><i data-lucide="circle-dashed" class="w-3 h-3 stroke-[2.5]"></i> Unpaid</span>
+                </template>
+              </td>
+              <td class="px-5 py-4 whitespace-nowrap">
+                <span x-show="o.tailor" class="inline-flex items-center gap-2 text-slate-800 font-medium">
+                  <span :class="tc[o.tailor]" class="grid place-items-center w-7 h-7 rounded-full text-[11px] font-semibold ring-1" x-text="o.tailor ? o.tailor[0] : ''"></span>
+                  <span x-text="o.tailor"></span>
+                </span>
+                <span x-show="!o.tailor" class="text-slate-400">—</span>
+              </td>
+              <td class="pr-4 text-slate-300 group-hover:text-slate-500 transition"><i data-lucide="chevron-right" class="w-4 h-4"></i></td>
+            </tr>
+          </template>
+
+          <tr x-show="filteredOrders.length === 0" style="display: none;">
+            <td colspan="8" class="px-5 py-14 text-center">
+              <i data-lucide="search-x" class="mx-auto w-[22px] h-[22px] text-slate-400"></i>
+              <p class="mt-2 text-sm font-medium text-slate-700">No orders match these filters</p>
+              <p class="text-xs text-slate-500 mt-0.5">Try another stage, due date or tailor.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="flex items-center justify-between px-5 py-3 border-t border-slate-100 text-xs text-slate-500">
+      <span>Showing <span class="font-semibold text-slate-700 tabular" x-text="filteredOrders.length"></span> of <span class="tabular" x-text="orders.length"></span> orders</span>
+      <span class="hidden sm:inline">Click a row to view the order details</span>
+    </footer>
+  </section>
+</div>
+
+
+<!-- SCREEN 3: Order Details -->
+      <div x-show="currentTab === 'order_details'" x-cloak 
+           x-data="{ orderStage: 'progress', paymentModal: false }">
+        
+        <div class="space-y-6">
+        <button type="button" @click="currentTab = 'orders'" class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition">
+  <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Orders
+</button>
+
+          <!-- Page header -->
+          <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5">
+            <div class="flex items-center gap-4 min-w-0">
+              <span class="grid place-items-center w-14 h-14 rounded-xl bg-white border border-slate-200 shadow-sm text-slate-700 shrink-0">
+                <i data-lucide="shirt" class="w-[26px] h-[26px] stroke-[1.75]"></i>
+              </span>
+              <div class="min-w-0">
+                <p class="text-xs font-medium text-slate-500">Orders <span class="text-slate-300">/</span> <span class="text-slate-700">ORD 1043</span></p>
+                <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <h1 class="text-2xl font-semibold tracking-tight">School Polo</h1>
+                  <!-- Dynamic Status Pill -->
+                  <span x-show="orderStage === 'progress'" class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset bg-amber-50 text-amber-700 ring-amber-200">In Progress</span>
+                  <span x-show="orderStage === 'ready'" class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset bg-emerald-50 text-emerald-700 ring-emerald-200">Ready for Pickup</span>
+                </div>
+                <p class="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-slate-500">
+                  <span class="font-semibold text-slate-900 tabular">ORD 1043</span>
+                  <span class="text-slate-300">·</span>
+                  <span class="text-slate-700">Lance Sacay</span>
+                  <span class="text-slate-300">·</span>
+                  <span class="inline-flex items-center gap-1"><i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Due today, Oct 28, 2026</span>
+                </p>
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <!-- Print Button -->
+              <button type="button" onclick="window.print()" class="h-10 px-4 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 inline-flex items-center gap-2 shadow-sm hover:bg-slate-50 transition">
+                <i data-lucide="printer" class="w-4 h-4"></i> Job Slip
+              </button>
+              <!-- Payment Modal Trigger -->
+              <button type="button" @click="paymentModal = true" class="h-10 px-4 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 inline-flex items-center gap-2 shadow-sm hover:bg-slate-50 transition">
+                <i data-lucide="wallet" class="w-4 h-4"></i> Record Payment
+              </button>
+              <!-- Mark Ready Trigger -->
+              <button type="button" @click="orderStage = 'ready'" :disabled="orderStage === 'ready'" 
+                :class="orderStage === 'ready' ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-800'"
+                class="h-10 px-4 rounded-lg bg-slate-900 text-white text-sm font-semibold inline-flex items-center gap-2 shadow-sm transition">
+                <i data-lucide="package-check" class="w-4 h-4"></i> Mark Ready for Pickup
+              </button>
+            </div>
+          </div>
+
+          <!-- Order progress Box -->
+          <nav aria-label="Order progress" class="bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-4">
+            <ol class="flex items-center">
+              
+              <!-- In Progress -->
+              <li class="flex items-center flex-1">
+                <div class="flex items-center gap-3">
+                  <span :class="orderStage === 'ready' ? 'bg-slate-900 text-white' : 'bg-slate-900 text-white ring-4 ring-slate-900/10'" class="grid place-items-center w-9 h-9 rounded-full shrink-0 transition">
+                    <i data-lucide="check" x-show="orderStage === 'ready'" class="w-4 h-4 stroke-[2.75]"></i>
+                    <i data-lucide="clock" x-show="orderStage === 'progress'" class="w-4 h-4"></i>
+                  </span>
+                  <div class="hidden sm:block">
+                    <p :class="orderStage === 'ready' ? 'text-slate-400' : 'text-slate-500'" class="text-[11px] font-semibold uppercase tracking-wider">Step 1</p>
+                    <p class="text-sm font-semibold leading-tight text-slate-900">In Progress</p>
+                  </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="flex-1 mx-3 sm:mx-5 h-1 rounded-full bg-slate-200 overflow-hidden">
+                  <div :class="orderStage === 'ready' ? 'w-full' : 'w-0'" class="h-full bg-slate-900 transition-all duration-500"></div>
+                </div>
+              </li>
+
+              <!-- Ready for Pickup -->
+              <li class="flex items-center flex-1">
+                <div class="flex items-center gap-3">
+                  <span :class="orderStage === 'ready' ? 'bg-slate-900 text-white ring-4 ring-slate-900/10' : 'bg-white text-slate-400 border border-slate-300'" class="grid place-items-center w-9 h-9 rounded-full shrink-0 transition">
+                    <i data-lucide="package-check" class="w-4 h-4"></i>
+                  </span>
+                  <div class="hidden sm:block">
+                    <p :class="orderStage === 'ready' ? 'text-slate-500' : 'text-slate-400'" class="text-[11px] font-semibold uppercase tracking-wider">Step 2</p>
+                    <p :class="orderStage === 'ready' ? 'text-slate-900' : 'text-slate-400'" class="text-sm font-semibold leading-tight">Ready for Pickup</p>
+                  </div>
+                </div>
+                <div class="flex-1 mx-3 sm:mx-5 h-1 rounded-full bg-slate-200 overflow-hidden">
+                  <div class="h-full bg-slate-900 w-0 transition-all duration-500"></div>
+                </div>
+              </li>
+
+              <!-- Claimed -->
+              <li class="flex items-center">
+                <div class="flex items-center gap-3">
+                  <span class="grid place-items-center w-9 h-9 rounded-full shrink-0 transition bg-white text-slate-400 border border-slate-300">
+                    <i data-lucide="circle-check-big" class="w-4 h-4"></i>
+                  </span>
+                  <div class="hidden sm:block">
+                    <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Step 3</p>
+                    <p class="text-sm font-semibold leading-tight text-slate-400">Claimed</p>
+                  </div>
+                </div>
+              </li>
+            </ol>
+          </nav>
+
+          <!-- Middle row -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Customer Box -->
+            <section class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
+              <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
+                <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700 shrink-0"><i data-lucide="user-round" class="w-[18px] h-[18px]"></i></span>
+                <h2 class="flex-1 text-[15px] font-semibold leading-tight">Customer</h2>
+                <button type="button" @click="currentTab = 'customers'" class="h-8 px-2.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-600 inline-flex items-center gap-1.5 hover:bg-slate-50 transition">
+                  <i data-lucide="user" class="w-[13px] h-[13px]"></i> Profile
+                </button>
+              </header>
+              <div class="p-5 flex-1">
+                <dl>
+                  <div class="flex items-center justify-between gap-3 min-h-[44px] py-2 border-b border-slate-100">
+                    <dt class="text-sm text-slate-500 inline-flex items-center gap-2">Name</dt>
+                    <dd class="text-sm font-medium text-slate-900 text-right tabular">Lance Sacay</dd>
+                  </div>
+                  <div class="flex items-center justify-between gap-3 min-h-[44px] py-2">
+                    <dt class="text-sm text-slate-500 inline-flex items-center gap-2"><i data-lucide="phone" class="w-3.5 h-3.5 text-slate-400"></i>Mobile</dt>
+                    <dd class="text-sm font-medium text-slate-900 text-right tabular">09116912544</dd>
+                  </div>
+                </dl>
+              </div>
+            </section>
+
+            <!-- Tailor Box -->
+            <section class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
+              <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
+                <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700 shrink-0"><i data-lucide="scissors" class="w-[18px] h-[18px]"></i></span>
+                <h2 class="flex-1 text-[15px] font-semibold leading-tight">Assigned Tailor</h2>
+                <button type="button" class="h-8 px-2.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-600 inline-flex items-center gap-1.5 hover:bg-slate-50 transition">
+                  <i data-lucide="repeat-2" class="w-[13px] h-[13px]"></i> Reassign
+                </button>
+              </header>
+              <div class="p-5 flex-1">
+                <dl>
+                  <div class="flex items-center justify-between gap-3 min-h-[44px] py-2 border-b border-slate-100">
+                    <dt class="text-sm text-slate-500 inline-flex items-center gap-2">Tailor</dt>
+                    <dd class="text-sm font-medium text-slate-900 text-right tabular">
+                      <span class="inline-flex items-center gap-2">
+                        <span class="grid place-items-center w-6 h-6 rounded-full text-[10px] font-semibold ring-1 bg-sky-100 text-sky-800 ring-sky-200">R</span> Robert
+                      </span>
+                    </dd>
+                  </div>
+                  <div class="flex items-center justify-between gap-3 min-h-[44px] py-2 border-b border-slate-100">
+                    <dt class="text-sm text-slate-500 inline-flex items-center gap-2">Order Date</dt>
+                    <dd class="text-sm font-medium text-slate-900 text-right tabular">Today <span class="font-normal text-slate-500">· Oct 28, 2026</span></dd>
+                  </div>
+                  <div class="flex items-center justify-between gap-3 min-h-[44px] py-2">
+                    <dt class="text-sm text-slate-500 inline-flex items-center gap-2">Due Date</dt>
+                    <dd class="text-sm font-medium text-slate-900 text-right tabular"><span class="text-amber-700">Today</span> <span class="font-normal text-slate-500">· Oct 28, 2026</span></dd>
+                  </div>
+                </dl>
+              </div>
+            </section>
+
+            <!-- Payment Box -->
+            <section class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
+              <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
+                <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700 shrink-0"><i data-lucide="wallet" class="w-[18px] h-[18px]"></i></span>
+                <h2 class="flex-1 text-[15px] font-semibold leading-tight">Payment</h2>
+              </header>
+              <div class="p-5 flex-1">
+                <dl>
+                  <div class="flex items-center justify-between gap-3 min-h-[44px] py-2 border-b border-slate-100">
+                    <dt class="text-sm text-slate-500 inline-flex items-center gap-2">Total</dt>
+                    <dd class="text-sm font-medium text-slate-900 text-right tabular">PHP 2,800</dd>
+                  </div>
+                  <div class="flex items-center justify-between gap-3 min-h-[44px] py-2">
+                    <dt class="text-sm text-slate-500 inline-flex items-center gap-2">Amount Paid</dt>
+                    <dd class="text-sm font-medium text-emerald-700 text-right tabular">PHP 1,500</dd>
+                  </div>
+                </dl>
+                <div class="mt-4 rounded-lg bg-slate-900/[0.04] border border-slate-200 px-4 py-3.5 flex items-center justify-between">
+                  <span class="text-sm font-semibold text-slate-700">Balance</span>
+                  <span class="text-xl font-bold tracking-tight tabular">PHP 1,300</span>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Bottom row -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Measurements Used Box -->
+            <section class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col lg:col-span-2">
+              <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
+                <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700 shrink-0"><i data-lucide="ruler" class="w-[18px] h-[18px]"></i></span>
+                <h2 class="flex-1 text-[15px] font-semibold leading-tight">Measurement Used</h2>
+                <span class="text-xs text-slate-500">Saved record</span>
+              </header>
+              <div class="p-5 flex-1">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div class="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3">
+                    <p class="text-xs font-medium text-slate-500">Shoulder</p>
+                    <p class="mt-1 flex items-baseline gap-1.5">
+                      <span class="text-2xl font-bold tracking-tight tabular">17</span>
+                      <span class="rounded-md bg-white border border-slate-200 px-1.5 py-0.5 text-[11px] font-medium text-slate-600">in</span>
+                    </p>
+                  </div>
+                  <div class="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3">
+                    <p class="text-xs font-medium text-slate-500">Chest</p>
+                    <p class="mt-1 flex items-baseline gap-1.5">
+                      <span class="text-2xl font-bold tracking-tight tabular">38</span>
+                      <span class="rounded-md bg-white border border-slate-200 px-1.5 py-0.5 text-[11px] font-medium text-slate-600">in</span>
+                    </p>
+                  </div>
+                  <div class="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3">
+                    <p class="text-xs font-medium text-slate-500">Length</p>
+                    <p class="mt-1 flex items-baseline gap-1.5">
+                      <span class="text-2xl font-bold tracking-tight tabular">28</span>
+                      <span class="rounded-md bg-white border border-slate-200 px-1.5 py-0.5 text-[11px] font-medium text-slate-600">in</span>
+                    </p>
+                  </div>
+                  <div class="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3">
+                    <p class="text-xs font-medium text-slate-500">Sleeve</p>
+                    <p class="mt-1 flex items-baseline gap-1.5">
+                      <span class="text-2xl font-bold tracking-tight tabular">9</span>
+                      <span class="rounded-md bg-white border border-slate-200 px-1.5 py-0.5 text-[11px] font-medium text-slate-600">in</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- SMS Notification Box -->
+            <section class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
+              <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
+                <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700 shrink-0"><i data-lucide="message-square-text" class="w-[18px] h-[18px]"></i></span>
+                <h2 class="flex-1 text-[15px] font-semibold leading-tight">SMS Notification</h2>
+                <span x-show="orderStage === 'progress'" class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-inset ring-slate-200"><i data-lucide="clock" class="w-3 h-3"></i> On Ready</span>
+                <span x-show="orderStage === 'ready'" class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200"><i data-lucide="check-check" class="w-3 h-3"></i> Sent</span>
+              </header>
+              <div class="p-5 flex-1">
+                <div class="rounded-xl bg-slate-50 border border-slate-200 p-4">
+                  <div class="flex items-center gap-2 pb-3 mb-3 border-b border-slate-200">
+                    <span class="grid place-items-center w-7 h-7 rounded-full bg-slate-900 text-white text-[10px] font-semibold">LS</span>
+                    <div class="leading-tight">
+                      <p class="text-xs font-semibold text-slate-900">Lance Sacay</p>
+                      <p class="text-[11px] text-slate-500 tabular">09116912544</p>
+                    </div>
+                  </div>
+                  <div class="flex justify-end">
+                    <div class="max-w-[85%] rounded-2xl rounded-br-md bg-slate-900 text-white px-3.5 py-2.5 text-sm leading-relaxed shadow-sm">
+                      Hi, Lance! Your school polo is ready for pickup.
+                    </div>
+                  </div>
+                  <p class="mt-1.5 text-right text-[11px] inline-flex items-center gap-1 w-full justify-end" :class="orderStage === 'ready' ? 'text-emerald-600' : 'text-slate-400'">
+                    <i data-lucide="send" x-show="orderStage === 'progress'" class="w-[11px] h-[11px]"></i>
+                    <i data-lucide="check-check" x-show="orderStage === 'ready'" class="w-[12px] h-[12px]"></i>
+                    <span x-text="orderStage === 'ready' ? 'Delivered just now' : 'Sends when marked Ready'"></span>
+                  </p>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <!-- RECORD PAYMENT MODAL -->
+        <div x-show="paymentModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div @click.away="paymentModal = false" class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-sm w-full p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 class="text-base font-bold text-slate-900">Record Payment</h3>
+              <button type="button" @click="paymentModal = false" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form @submit.prevent="paymentModal = false" class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Amount (PHP)</label>
+                <input type="number" placeholder="1300" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-slate-900 focus:outline-none" required />
+              </div>
+              <div class="pt-2 flex justify-end gap-2">
+                <button type="button" @click="paymentModal = false" class="px-4 py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition">Cancel</button>
+                <button type="submit" class="px-4 py-2.5 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition">Update Balance</button>
+              </div>
+            </form>
+          </div>
+        </div>
 
       </div>
 
@@ -923,195 +1248,6 @@
         </div>
 
       </div>
-
-  <!-- SCREEN 7: Reports -->
-<div x-show="currentTab === 'reports'" x-cloak
-     x-data="{
-       range: 'This week', hover: null,
-       ranges: ['Today', 'This week', 'Last 30 days'],
-       reports: {
-         'Today': {
-           rangeLabel: 'Oct 28, 2026', unit: 'hour', subtitle: 'Today, Oct 28', max: 4, ticks: [4, 3, 2, 1, 0],
-           kpi: { claimed: 7, cash: 1050, gcash: 700, total: 1750 },
-           series: [
-             { label: '9a', sub: '9:00', count: 1 }, { label: '10a', sub: '10:00', count: 0 }, { label: '11a', sub: '11:00', count: 2 },
-             { label: '12p', sub: '12:00', count: 0 }, { label: '1p', sub: '13:00', count: 1 }, { label: '2p', sub: '14:00', count: 0 },
-             { label: '3p', sub: '15:00', count: 1 }, { label: '4p', sub: '16:00', count: 1 }, { label: '5p', sub: '17:00 · Now', count: 1, current: true }
-           ],
-           garments: [['School Polo', 3], ['School Blouse', 2], ['Slacks', 1], ['Barong', 1], ['Filipiniana', 0], ['Tuxedo', 0]]
-         },
-         'This week': {
-           rangeLabel: 'Oct 22 - Oct 28, 2026', unit: 'day', subtitle: 'This week · Oct 22 – Oct 28', max: 12, ticks: [12, 9, 6, 3, 0],
-           kpi: { claimed: 46, cash: 6250, gcash: 4560, total: 10810 },
-           series: [
-             { label: 'Thu', sub: 'Oct 22', count: 5 }, { label: 'Fri', sub: 'Oct 23', count: 8 }, { label: 'Sat', sub: 'Oct 24', count: 11 },
-             { label: 'Sun', sub: 'Oct 25', count: 2 }, { label: 'Mon', sub: 'Oct 26', count: 6 }, { label: 'Tue', sub: 'Oct 27', count: 7 },
-             { label: 'Wed', sub: 'Today', count: 7, current: true }
-           ],
-           garments: [['School Polo', 15], ['School Blouse', 12], ['Slacks', 8], ['Barong', 6], ['Filipiniana', 3], ['Tuxedo', 2]]
-         },
-         'Last 30 days': {
-           rangeLabel: 'Sep 29 - Oct 28, 2026', unit: 'week', subtitle: 'Last 30 days · Sep 29 – Oct 28', max: 50, ticks: [50, 40, 30, 20, 10, 0],
-           kpi: { claimed: 172, cash: 23400, gcash: 17250, total: 40650 },
-           series: [
-             { label: 'Sep 29–30', sub: '2 days', count: 9 }, { label: 'Oct 1–7', sub: '7 days', count: 36 },
-             { label: 'Oct 8–14', sub: '7 days', count: 42 }, { label: 'Oct 15–21', sub: '7 days', count: 39 },
-             { label: 'Oct 22–28', sub: 'This week', count: 46, current: true }
-           ],
-           garments: [['School Polo', 52], ['School Blouse', 44], ['Slacks', 31], ['Barong', 22], ['Filipiniana', 14], ['Tuxedo', 9]]
-         }
-       },
-       get r() { return this.reports[this.range]; },
-       get gTotal() { return this.r.garments.reduce((s, g) => s + g[1], 0); },
-       get gMax() { return this.r.garments[0][1]; },
-       peso(n) { return '₱' + n.toLocaleString('en-PH'); },
-       setRange(x) { this.range = x; this.hover = null; },
-       exportCsv() {
-         const r = this.r;
-         const rows = [['Report', this.range, r.rangeLabel], [], ['Claimed Orders', r.kpi.claimed], ['Cash Received', r.kpi.cash], ['GCash Received', r.kpi.gcash], ['Total Collected', r.kpi.total], [], ['Claimed per ' + r.unit, 'Count']]
-           .concat(r.series.map(d => [d.label + ' (' + d.sub + ')', d.count]), [[], ['Garment Type', 'Count']], r.garments);
-         const a = document.createElement('a');
-         a.href = URL.createObjectURL(new Blob([rows.map(x => x.join(',')).join('\n')], { type: 'text/csv' }));
-         a.download = 'tahian-report-' + this.range.toLowerCase().replace(/\s+/g, '-') + '.csv';
-         a.click();
-       }
-     }">
-
-  <!-- Page header and controls -->
-  <div class="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-    <div>
-      <p class="text-xs font-medium text-slate-500">Reports <span class="text-slate-300">/</span> <span class="text-slate-700">Overview</span></p>
-      <h1 class="text-2xl font-semibold tracking-tight mt-1">Reports</h1>
-    </div>
-    <div class="flex flex-wrap items-center gap-3">
-      <div role="tablist" class="inline-flex items-center gap-1 p-1 rounded-lg bg-white border border-slate-200 shadow-sm">
-        <template x-for="x in ranges" :key="x">
-          <button type="button" role="tab" @click="setRange(x)"
-                  :class="range === x ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
-                  class="h-8 px-3.5 rounded-md text-sm font-medium transition whitespace-nowrap" x-text="x"></button>
-        </template>
-      </div>
-      <button type="button" @click="exportCsv()" class="h-10 px-4 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold inline-flex items-center gap-2 shadow-sm hover:bg-slate-50 hover:text-slate-900 transition">
-        <i data-lucide="download" class="w-4 h-4"></i> Export
-      </button>
-    </div>
-  </div>
-
-  <!-- KPI row -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-    <div class="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
-      <div class="flex items-center justify-between"><p class="text-sm font-medium text-slate-600">Claimed Orders</p>
-        <span class="grid place-items-center w-9 h-9 rounded-lg ring-1 bg-emerald-50 text-emerald-700 ring-emerald-200"><i data-lucide="package-check" class="w-[18px] h-[18px]"></i></span></div>
-      <p class="mt-3 text-[28px] leading-none font-bold tracking-tight tabular" x-text="r.kpi.claimed"></p>
-      <p class="mt-2.5 inline-flex items-center gap-1.5 text-xs text-slate-500"><i data-lucide="calendar-days" class="w-3 h-3"></i> <span x-text="r.rangeLabel"></span></p>
-    </div>
-    <div class="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
-      <div class="flex items-center justify-between"><p class="text-sm font-medium text-slate-600">Cash Received</p>
-        <span class="grid place-items-center w-9 h-9 rounded-lg ring-1 bg-sky-50 text-sky-700 ring-sky-200"><i data-lucide="banknote" class="w-[18px] h-[18px]"></i></span></div>
-      <p class="mt-3 text-[28px] leading-none font-bold tracking-tight tabular" x-text="peso(r.kpi.cash)"></p>
-      <p class="mt-2.5 inline-flex items-center gap-1.5 text-xs text-slate-500"><i data-lucide="calendar-days" class="w-3 h-3"></i> <span x-text="r.rangeLabel"></span></p>
-    </div>
-    <div class="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
-      <div class="flex items-center justify-between"><p class="text-sm font-medium text-slate-600">GCash Received</p>
-        <span class="grid place-items-center w-9 h-9 rounded-lg ring-1 bg-violet-50 text-violet-700 ring-violet-200"><i data-lucide="smartphone" class="w-[18px] h-[18px]"></i></span></div>
-      <p class="mt-3 text-[28px] leading-none font-bold tracking-tight tabular" x-text="peso(r.kpi.gcash)"></p>
-      <p class="mt-2.5 inline-flex items-center gap-1.5 text-xs text-slate-500"><i data-lucide="calendar-days" class="w-3 h-3"></i> <span x-text="r.rangeLabel"></span></p>
-    </div>
-    <div class="rounded-xl border border-slate-900 bg-slate-900 text-white shadow-sm p-5">
-      <div class="flex items-center justify-between"><p class="text-sm font-medium text-slate-300">Total Collected</p>
-        <span class="grid place-items-center w-9 h-9 rounded-lg ring-1 bg-white/10 text-white ring-white/20"><i data-lucide="wallet" class="w-[18px] h-[18px]"></i></span></div>
-      <p class="mt-3 text-[28px] leading-none font-bold tracking-tight tabular" x-text="peso(r.kpi.total)"></p>
-      <p class="mt-2.5 inline-flex items-center gap-1.5 text-xs text-slate-400"><i data-lucide="calendar-days" class="w-3 h-3"></i> <span x-text="r.rangeLabel"></span></p>
-    </div>
-  </div>
-
-  <!-- Bottom row -->
-  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-
-    <!-- Claimed orders -->
-    <section class="lg:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm">
-      <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
-        <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="trending-up" class="w-[18px] h-[18px]"></i></span>
-        <div>
-          <h2 class="text-[15px] font-semibold leading-tight">Claimed orders per <span x-text="r.unit"></span></h2>
-          <p class="text-xs text-slate-500 mt-0.5" x-text="r.subtitle"></p>
-        </div>
-      </header>
-      <div class="p-5">
-        <div class="pt-8"></div>
-        <div class="flex gap-3">
-
-          <div class="relative h-72 w-5 text-[11px] text-slate-400 tabular text-right">
-            <template x-for="t in r.ticks" :key="t">
-              <span class="absolute right-0 -translate-y-1/2" :style="`top:${100 - (t / r.max) * 100}%`" x-text="t"></span>
-            </template>
-          </div>
-
-          <div class="relative flex-1 h-72">
-            <div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
-              <template x-for="(t, i) in r.ticks" :key="t">
-                <div class="border-t" :class="i === r.ticks.length - 1 ? 'border-slate-300' : 'border-dashed border-slate-200'"></div>
-              </template>
-            </div>
-            <div class="relative h-full flex items-end justify-between gap-2 sm:gap-4 px-1 sm:px-3">
-              <template x-for="(d, i) in r.series" :key="d.label">
-                <div class="relative flex-1 h-full flex items-end justify-center" @mouseenter="hover = i" @mouseleave="hover = null">
-                  <div x-show="hover === i" class="absolute z-10 -translate-y-2 rounded-lg bg-slate-900 px-2.5 py-1.5 text-center text-white shadow-lg whitespace-nowrap" :style="`bottom:${(d.count / r.max) * 100}%`">
-                    <p class="text-xs font-semibold tabular"><span x-text="d.count"></span> claimed</p>
-                    <p class="text-[10px] text-slate-400"><span x-text="d.label"></span> · <span x-text="d.sub"></span></p>
-                  </div>
-                  <div class="w-full max-w-[44px] rounded-t-md transition-all duration-200"
-                       :class="d.current ? 'bg-slate-900' : (hover === i ? 'bg-slate-500' : 'bg-slate-300')"
-                       :style="`height:${d.count ? (d.count / r.max) * 100 + '%' : '2px'}`"
-                       role="img" :aria-label="`${d.label} ${d.sub}: ${d.count} claimed orders`"></div>
-                </div>
-              </template>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex gap-3 mt-2">
-          <div class="w-5"></div>
-          <div class="flex-1 flex justify-between gap-2 sm:gap-4 px-1 sm:px-3">
-            <template x-for="d in r.series" :key="d.label">
-              <div class="flex-1 text-center leading-tight min-w-0">
-                <p class="text-xs font-semibold truncate" :class="d.current ? 'text-slate-900' : 'text-slate-600'" x-text="d.label"></p>
-                <p class="text-[10px] text-slate-400 hidden sm:block truncate" x-text="d.sub"></p>
-              </div>
-            </template>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Garment type ranking -->
-    <section class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
-      <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
-        <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="shirt" class="w-[18px] h-[18px]"></i></span>
-        <div class="flex-1">
-          <h2 class="text-[15px] font-semibold leading-tight">Garment Type</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Ranked by claimed orders</p>
-        </div>
-      </header>
-      <ol class="flex-1">
-        <template x-for="(g, i) in r.garments" :key="g[0]">
-          <li class="px-5 py-3.5 border-b border-slate-100 last:border-b-0 hover:bg-slate-50/80 transition">
-            <div class="flex items-center gap-3">
-              <span class="grid place-items-center w-6 h-6 rounded-md text-[11px] font-bold tabular shrink-0" :class="i === 0 ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500'" x-text="i + 1"></span>
-              <span class="flex-1 text-sm font-medium text-slate-800" x-text="g[0]"></span>
-              <span class="text-xs text-slate-400 tabular" x-text="(gTotal ? Math.round((g[1] / gTotal) * 100) : 0) + '%'"></span>
-              <span class="min-w-[36px] text-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-800 tabular ring-1 ring-inset ring-slate-200" x-text="g[1]"></span>
-            </div>
-            <div class="mt-2 ml-9 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-              <div class="h-full rounded-full" :class="i === 0 ? 'bg-slate-900' : 'bg-slate-400'" :style="`width:${(g[1] / gMax) * 100}%`"></div>
-            </div>
-          </li>
-        </template>
-      </ol>
-    </section>
-  </div>
-</div>
-      
 
 <!-- SCREEN 5: Customers Page -->
       <div x-show="currentTab === 'customers'" x-cloak 
@@ -1721,8 +1857,198 @@
         </div>
       </div>
 
+
+  <!-- SCREEN 7: Reports -->
+<div x-show="currentTab === 'reports'" x-cloak
+     x-data="{
+       range: 'This week', hover: null,
+       ranges: ['Today', 'This week', 'Last 30 days'],
+       reports: {
+         'Today': {
+           rangeLabel: 'Oct 28, 2026', unit: 'hour', subtitle: 'Today, Oct 28', max: 4, ticks: [4, 3, 2, 1, 0],
+           kpi: { claimed: 7, cash: 1050, gcash: 700, total: 1750 },
+           series: [
+             { label: '9a', sub: '9:00', count: 1 }, { label: '10a', sub: '10:00', count: 0 }, { label: '11a', sub: '11:00', count: 2 },
+             { label: '12p', sub: '12:00', count: 0 }, { label: '1p', sub: '13:00', count: 1 }, { label: '2p', sub: '14:00', count: 0 },
+             { label: '3p', sub: '15:00', count: 1 }, { label: '4p', sub: '16:00', count: 1 }, { label: '5p', sub: '17:00 · Now', count: 1, current: true }
+           ],
+           garments: [['School Polo', 3], ['School Blouse', 2], ['Slacks', 1], ['Barong', 1], ['Filipiniana', 0], ['Tuxedo', 0]]
+         },
+         'This week': {
+           rangeLabel: 'Oct 22 - Oct 28, 2026', unit: 'day', subtitle: 'This week · Oct 22 – Oct 28', max: 12, ticks: [12, 9, 6, 3, 0],
+           kpi: { claimed: 46, cash: 6250, gcash: 4560, total: 10810 },
+           series: [
+             { label: 'Thu', sub: 'Oct 22', count: 5 }, { label: 'Fri', sub: 'Oct 23', count: 8 }, { label: 'Sat', sub: 'Oct 24', count: 11 },
+             { label: 'Sun', sub: 'Oct 25', count: 2 }, { label: 'Mon', sub: 'Oct 26', count: 6 }, { label: 'Tue', sub: 'Oct 27', count: 7 },
+             { label: 'Wed', sub: 'Today', count: 7, current: true }
+           ],
+           garments: [['School Polo', 15], ['School Blouse', 12], ['Slacks', 8], ['Barong', 6], ['Filipiniana', 3], ['Tuxedo', 2]]
+         },
+         'Last 30 days': {
+           rangeLabel: 'Sep 29 - Oct 28, 2026', unit: 'week', subtitle: 'Last 30 days · Sep 29 – Oct 28', max: 50, ticks: [50, 40, 30, 20, 10, 0],
+           kpi: { claimed: 172, cash: 23400, gcash: 17250, total: 40650 },
+           series: [
+             { label: 'Sep 29–30', sub: '2 days', count: 9 }, { label: 'Oct 1–7', sub: '7 days', count: 36 },
+             { label: 'Oct 8–14', sub: '7 days', count: 42 }, { label: 'Oct 15–21', sub: '7 days', count: 39 },
+             { label: 'Oct 22–28', sub: 'This week', count: 46, current: true }
+           ],
+           garments: [['School Polo', 52], ['School Blouse', 44], ['Slacks', 31], ['Barong', 22], ['Filipiniana', 14], ['Tuxedo', 9]]
+         }
+       },
+       get r() { return this.reports[this.range]; },
+       get gTotal() { return this.r.garments.reduce((s, g) => s + g[1], 0); },
+       get gMax() { return this.r.garments[0][1]; },
+       peso(n) { return '₱' + n.toLocaleString('en-PH'); },
+       setRange(x) { this.range = x; this.hover = null; },
+       exportCsv() {
+         const r = this.r;
+         const rows = [['Report', this.range, r.rangeLabel], [], ['Claimed Orders', r.kpi.claimed], ['Cash Received', r.kpi.cash], ['GCash Received', r.kpi.gcash], ['Total Collected', r.kpi.total], [], ['Claimed per ' + r.unit, 'Count']]
+           .concat(r.series.map(d => [d.label + ' (' + d.sub + ')', d.count]), [[], ['Garment Type', 'Count']], r.garments);
+         const a = document.createElement('a');
+         a.href = URL.createObjectURL(new Blob([rows.map(x => x.join(',')).join('\n')], { type: 'text/csv' }));
+         a.download = 'tahian-report-' + this.range.toLowerCase().replace(/\s+/g, '-') + '.csv';
+         a.click();
+       }
+     }">
+
+  <!-- Page header and controls -->
+  <div class="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+    <div>
+      <p class="text-xs font-medium text-slate-500">Reports <span class="text-slate-300">/</span> <span class="text-slate-700">Overview</span></p>
+      <h1 class="text-2xl font-semibold tracking-tight mt-1">Reports</h1>
+    </div>
+    <div class="flex flex-wrap items-center gap-3">
+      <div role="tablist" class="inline-flex items-center gap-1 p-1 rounded-lg bg-white border border-slate-200 shadow-sm">
+        <template x-for="x in ranges" :key="x">
+          <button type="button" role="tab" @click="setRange(x)"
+                  :class="range === x ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
+                  class="h-8 px-3.5 rounded-md text-sm font-medium transition whitespace-nowrap" x-text="x"></button>
+        </template>
+      </div>
+      <button type="button" @click="exportCsv()" class="h-10 px-4 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold inline-flex items-center gap-2 shadow-sm hover:bg-slate-50 hover:text-slate-900 transition">
+        <i data-lucide="download" class="w-4 h-4"></i> Export
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI row -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+    <div class="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+      <div class="flex items-center justify-between"><p class="text-sm font-medium text-slate-600">Claimed Orders</p>
+        <span class="grid place-items-center w-9 h-9 rounded-lg ring-1 bg-emerald-50 text-emerald-700 ring-emerald-200"><i data-lucide="package-check" class="w-[18px] h-[18px]"></i></span></div>
+      <p class="mt-3 text-[28px] leading-none font-bold tracking-tight tabular" x-text="r.kpi.claimed"></p>
+      <p class="mt-2.5 inline-flex items-center gap-1.5 text-xs text-slate-500"><i data-lucide="calendar-days" class="w-3 h-3"></i> <span x-text="r.rangeLabel"></span></p>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+      <div class="flex items-center justify-between"><p class="text-sm font-medium text-slate-600">Cash Received</p>
+        <span class="grid place-items-center w-9 h-9 rounded-lg ring-1 bg-sky-50 text-sky-700 ring-sky-200"><i data-lucide="banknote" class="w-[18px] h-[18px]"></i></span></div>
+      <p class="mt-3 text-[28px] leading-none font-bold tracking-tight tabular" x-text="peso(r.kpi.cash)"></p>
+      <p class="mt-2.5 inline-flex items-center gap-1.5 text-xs text-slate-500"><i data-lucide="calendar-days" class="w-3 h-3"></i> <span x-text="r.rangeLabel"></span></p>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+      <div class="flex items-center justify-between"><p class="text-sm font-medium text-slate-600">GCash Received</p>
+        <span class="grid place-items-center w-9 h-9 rounded-lg ring-1 bg-violet-50 text-violet-700 ring-violet-200"><i data-lucide="smartphone" class="w-[18px] h-[18px]"></i></span></div>
+      <p class="mt-3 text-[28px] leading-none font-bold tracking-tight tabular" x-text="peso(r.kpi.gcash)"></p>
+      <p class="mt-2.5 inline-flex items-center gap-1.5 text-xs text-slate-500"><i data-lucide="calendar-days" class="w-3 h-3"></i> <span x-text="r.rangeLabel"></span></p>
+    </div>
+    <div class="rounded-xl border border-slate-900 bg-slate-900 text-white shadow-sm p-5">
+      <div class="flex items-center justify-between"><p class="text-sm font-medium text-slate-300">Total Collected</p>
+        <span class="grid place-items-center w-9 h-9 rounded-lg ring-1 bg-white/10 text-white ring-white/20"><i data-lucide="wallet" class="w-[18px] h-[18px]"></i></span></div>
+      <p class="mt-3 text-[28px] leading-none font-bold tracking-tight tabular" x-text="peso(r.kpi.total)"></p>
+      <p class="mt-2.5 inline-flex items-center gap-1.5 text-xs text-slate-400"><i data-lucide="calendar-days" class="w-3 h-3"></i> <span x-text="r.rangeLabel"></span></p>
+    </div>
+  </div>
+
+  <!-- Bottom row -->
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+    <!-- Claimed orders -->
+    <section class="lg:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm">
+      <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
+        <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="trending-up" class="w-[18px] h-[18px]"></i></span>
+        <div>
+          <h2 class="text-[15px] font-semibold leading-tight">Claimed orders per <span x-text="r.unit"></span></h2>
+          <p class="text-xs text-slate-500 mt-0.5" x-text="r.subtitle"></p>
+        </div>
+      </header>
+      <div class="p-5">
+        <div class="pt-8"></div>
+        <div class="flex gap-3">
+
+          <div class="relative h-72 w-5 text-[11px] text-slate-400 tabular text-right">
+            <template x-for="t in r.ticks" :key="t">
+              <span class="absolute right-0 -translate-y-1/2" :style="`top:${100 - (t / r.max) * 100}%`" x-text="t"></span>
+            </template>
+          </div>
+
+          <div class="relative flex-1 h-72">
+            <div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
+              <template x-for="(t, i) in r.ticks" :key="t">
+                <div class="border-t" :class="i === r.ticks.length - 1 ? 'border-slate-300' : 'border-dashed border-slate-200'"></div>
+              </template>
+            </div>
+            <div class="relative h-full flex items-end justify-between gap-2 sm:gap-4 px-1 sm:px-3">
+              <template x-for="(d, i) in r.series" :key="d.label">
+                <div class="relative flex-1 h-full flex items-end justify-center" @mouseenter="hover = i" @mouseleave="hover = null">
+                  <div x-show="hover === i" class="absolute z-10 -translate-y-2 rounded-lg bg-slate-900 px-2.5 py-1.5 text-center text-white shadow-lg whitespace-nowrap" :style="`bottom:${(d.count / r.max) * 100}%`">
+                    <p class="text-xs font-semibold tabular"><span x-text="d.count"></span> claimed</p>
+                    <p class="text-[10px] text-slate-400"><span x-text="d.label"></span> · <span x-text="d.sub"></span></p>
+                  </div>
+                  <div class="w-full max-w-[44px] rounded-t-md transition-all duration-200"
+                       :class="d.current ? 'bg-slate-900' : (hover === i ? 'bg-slate-500' : 'bg-slate-300')"
+                       :style="`height:${d.count ? (d.count / r.max) * 100 + '%' : '2px'}`"
+                       role="img" :aria-label="`${d.label} ${d.sub}: ${d.count} claimed orders`"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-3 mt-2">
+          <div class="w-5"></div>
+          <div class="flex-1 flex justify-between gap-2 sm:gap-4 px-1 sm:px-3">
+            <template x-for="d in r.series" :key="d.label">
+              <div class="flex-1 text-center leading-tight min-w-0">
+                <p class="text-xs font-semibold truncate" :class="d.current ? 'text-slate-900' : 'text-slate-600'" x-text="d.label"></p>
+                <p class="text-[10px] text-slate-400 hidden sm:block truncate" x-text="d.sub"></p>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Garment type ranking -->
+    <section class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
+      <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
+        <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="shirt" class="w-[18px] h-[18px]"></i></span>
+        <div class="flex-1">
+          <h2 class="text-[15px] font-semibold leading-tight">Garment Type</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Ranked by claimed orders</p>
+        </div>
+      </header>
+      <ol class="flex-1">
+        <template x-for="(g, i) in r.garments" :key="g[0]">
+          <li class="px-5 py-3.5 border-b border-slate-100 last:border-b-0 hover:bg-slate-50/80 transition">
+            <div class="flex items-center gap-3">
+              <span class="grid place-items-center w-6 h-6 rounded-md text-[11px] font-bold tabular shrink-0" :class="i === 0 ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500'" x-text="i + 1"></span>
+              <span class="flex-1 text-sm font-medium text-slate-800" x-text="g[0]"></span>
+              <span class="text-xs text-slate-400 tabular" x-text="(gTotal ? Math.round((g[1] / gTotal) * 100) : 0) + '%'"></span>
+              <span class="min-w-[36px] text-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-800 tabular ring-1 ring-inset ring-slate-200" x-text="g[1]"></span>
+            </div>
+            <div class="mt-2 ml-9 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+              <div class="h-full rounded-full" :class="i === 0 ? 'bg-slate-900' : 'bg-slate-400'" :style="`width:${(g[1] / gMax) * 100}%`"></div>
+            </div>
+          </li>
+        </template>
+      </ol>
+    </section>
+  </div>
+</div>
+
     </main>
   </div>
+
 
   <script>
     lucide.createIcons();
@@ -1731,6 +2057,7 @@
     });
   </script>
 
+  
 <!-- print job slip -->
 <div id="print-job-slip" class="hidden print:block">
 
@@ -1791,7 +2118,7 @@
     <p class="mt-3">Please present this slip when collecting your order.</p>
     <p class="mt-1 font-semibold">Thank you!</p>
   </div>
-</div>
 
+</div>
 </body>
 </html>
