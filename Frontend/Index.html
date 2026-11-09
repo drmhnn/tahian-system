@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TahiAn – Tailoring Workflow Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f2f4f7;--card:#fff;--line:#dfe3ea;--tx:#1b2236;--mu:#68718a;--side:#1b2542;--ac:#e8b21c;--thread:#c4432d;--ok:#2c7a58;--blue:#3a5cc2;--soft:#eef1f6;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#11151f;--card:#1a2030;--line:#2b3347;--tx:#e8ecf4;--mu:#97a1b8;--side:#0c101c;--soft:#222a3d;--blue:#7d9aef;--ok:#52b58a;--thread:#ee7a62}}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font:14px/1.45 "Public Sans",system-ui,sans-serif}
+h1,h2,h3,.brand{font-family:"Bricolage Grotesque",system-ui,sans-serif;margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+#app{display:flex;height:100%}
+aside{width:200px;background:var(--side);color:#cfd6ea;display:flex;flex-direction:column;padding:18px 12px;flex:none}
+.brand{color:#fff;font-size:22px;font-weight:700;padding:0 10px 18px;display:flex;align-items:center;gap:9px}
+.brand b{width:26px;height:26px;border-radius:7px;background:var(--ac);color:var(--side);display:grid;place-items:center;font-size:15px}
+aside button{all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:#cfd6ea;margin-bottom:2px}
+aside button:hover{background:#ffffff14}aside button:focus-visible{outline:2px solid var(--ac)}
+aside button.on{background:#ffffff1f;color:#fff;font-weight:600}
+aside button i{width:9px;height:9px;border:2px solid currentColor;border-radius:3px;opacity:.7}
+aside button.on i{background:var(--ac);border-color:var(--ac);opacity:1}
+aside .out{margin-top:auto;font-size:13px;opacity:.8}
+main{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{display:flex;gap:14px;align-items:center;padding:12px 24px;background:var(--card);position:relative;border-bottom:1px solid var(--line)}
+.top::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:7px;background:repeating-linear-gradient(90deg,var(--ac) 0 1px,transparent 1px 8px),repeating-linear-gradient(90deg,var(--ac) 0 1px,transparent 1px 40px);background-size:8px 4px,40px 7px;background-repeat:repeat-x;background-position:0 100%;opacity:.8}
+.top input{flex:1;max-width:420px;border:1px solid var(--line);background:var(--soft);padding:9px 14px;border-radius:9px}
+.who{margin-left:auto;display:flex;gap:10px;align-items:center;text-align:right;font-size:12px;color:var(--mu)}
+.who b{display:block;color:var(--tx);font-size:14px}
+.av{width:36px;height:36px;border-radius:50%;background:var(--side);color:#fff;display:grid;place-items:center;font-weight:600}
+.page{padding:24px;overflow:auto;flex:1}
+.hd{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.hd h1{font-size:26px;margin-right:auto}
+.btn{border:1px solid var(--line);background:var(--card);padding:8px 14px;border-radius:9px;font-weight:500}
+.btn:hover{background:var(--soft)}
+.btn.p{background:var(--side);color:#fff;border-color:var(--side)}
+.btn.p:hover{filter:brightness(1.25)}
+.btn.a{background:var(--ac);border-color:var(--ac);color:#1b2236;font-weight:600}
+.btn.s{padding:5px 10px;font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px}
+.stat{all:unset;cursor:pointer;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;border-left:5px solid var(--ac)}
+.stat:hover{background:var(--soft)}.stat.r{border-left-color:var(--thread)}
+.stat small{color:var(--mu);display:block}.stat strong{font:700 34px "Bricolage Grotesque",sans-serif;display:block;line-height:1.1;margin:4px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px}
+.card h3{font-size:16px;margin-bottom:12px}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-weight:600;font-size:12px;color:var(--mu);padding:8px 10px;border-bottom:1px solid var(--line)}
+.tbl td{padding:12px 10px;border-bottom:1px solid var(--line)}
+.tbl tr:last-child td{border:0}
+.tbl tbody tr.k{cursor:pointer}.tbl tbody tr.k:hover{background:var(--soft)}
+.wrap{overflow-x:auto}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:600;background:var(--soft)}
+.pill.ok{background:#2c7a5822;color:var(--ok)}.pill.bad{background:#c4432d22;color:var(--thread)}.pill.in{background:#3a5cc222;color:var(--blue)}.pill.ac{background:#e8b21c33}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 14px}
+.tabs button.on{background:var(--side);color:#fff;border-color:var(--side)}
+.g2{display:grid;grid-template-columns:2fr 1fr;gap:16px}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.meas{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:10px}
+.meas div,.fld{background:var(--soft);border-radius:9px;padding:9px 12px}
+.meas small,label small{display:block;color:var(--mu);font-size:12px}.meas b{font-size:17px}
+.f{display:grid;gap:12px}.f2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{display:block;font-weight:500}
+label input,label select,label textarea{display:block;width:100%;margin-top:5px;border:1px solid var(--line);background:var(--card);border-radius:9px;padding:9px 12px}
+.trk{display:flex;margin:6px 0 4px}
+.st{flex:1;text-align:center;position:relative;font-size:13px;color:var(--mu)}
+.st i{display:block;width:16px;height:16px;border-radius:50%;border:2px solid var(--line);background:var(--card);margin:0 auto 6px;position:relative;z-index:1}
+.st::before{content:"";position:absolute;top:7px;left:-50%;width:100%;border-top:2px dashed var(--line)}
+.st:first-child::before{display:none}
+.st.done{color:var(--tx)}.st.done i{background:var(--ok);border-color:var(--ok)}.st.done::before,.st.cur::before{border-color:var(--ok)}
+.st.cur{color:var(--tx);font-weight:600}.st.cur i{background:var(--ac);border-color:var(--ac)}
+.board{display:grid;grid-template-columns:repeat(3,minmax(230px,1fr));gap:14px;overflow-x:auto}
+.col{background:var(--soft);border-radius:12px;padding:12px;min-height:300px}
+.col h3{font-size:15px;margin-bottom:10px;display:flex;justify-content:space-between}
+.kc{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;cursor:pointer}
+.kc:hover{border-color:var(--ac)}.kc small{color:var(--mu)}.kc .row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:6px}
+.bar{height:8px;background:var(--soft);border-radius:4px;overflow:hidden}.bar span{display:block;height:100%;background:var(--ac)}
+.chart{display:flex;align-items:flex-end;gap:12px;height:180px;padding-top:10px}
+.chart div{flex:1;text-align:center;font-size:12px;color:var(--mu);display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.chart i{display:block;background:var(--side);border-radius:6px 6px 0 0;margin-bottom:6px}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .chart i{background:var(--ac)}}
+.sms{background:var(--soft);border-radius:12px 12px 12px 3px;padding:12px;border:1px dashed var(--mu);font-size:13px}
+.kv{display:flex;justify-content:space-between;padding:5px 0}.kv.t{border-top:1px solid var(--line);margin-top:6px;padding-top:10px;font-weight:600}
+#modal{position:fixed;inset:0;background:#0009;display:none;place-items:center;z-index:20;padding:16px}
+#modal.on{display:grid}#modal .card{width:100%;max-width:440px;margin:0}
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);background:var(--side);color:#fff;padding:11px 18px;border-radius:10px;opacity:0;transition:.25s;z-index:30;pointer-events:none;border-left:5px solid var(--ac);max-width:90%}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#login{display:grid;place-items:center;height:100%;width:100%;padding:16px}
+#login .card{width:100%;max-width:370px;text-align:center;padding:30px}
+#login .brand{color:var(--tx);justify-content:center;padding:0 0 4px;font-size:30px}
+#login p{color:var(--mu);margin:0 0 20px}#login .f{text-align:left}
+@media (max-width:760px){#app{flex-direction:column}aside{width:100%;flex-direction:row;overflow-x:auto;padding:8px}.brand,aside .out{display:none}aside button{white-space:nowrap}.g2,.g3,.f2{grid-template-columns:1fr}.page{padding:16px}.top{padding:10px 16px}.who span{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal"></div>
+<div id="toast" role="status"></div>
+<script>
+const ST=['Cutting','Sewing','Fitting','Ready','Claimed'];
+const NAV=[['home','Home'],['customers','Customers'],['orders','Orders'],['production','Production'],['inventory','Inventory'],['reports','Reports']];
+const U={Chest:34,Shoulder:15,Length:28,Sleeve:8.5},L={Waist:30,Hips:38,'Pants length':39,'Leg opening':14};
+let C=[
+{id:'C-0001',n:'Lance Sacay',m:'0927 125 1255',t:'Individual',u:U,l:null,d:'Oct 20, 2026'},
+{id:'C-0002',n:'MSU IIT',m:'0912 151 2616',t:'Bulk',u:null,l:null},
+{id:'C-0003',n:'Jon Berd',m:'0966 295 1862',t:'Individual',u:{Chest:37,Shoulder:16,Length:28,Sleeve:8},l:{Waist:32,Hips:38,'Pants length':39,'Leg opening':14},d:'Oct 08, 2026'},
+{id:'C-0004',n:'Lrizz Nathan',m:'0939 519 6970',t:'Individual',u:null,l:null}];
+let O=[
+{id:1043,c:'C-0001',g:'School Polo',due:'Today',s:1,total:2800,paid:1500,tl:'Robert'},
+{id:1042,c:'C-0002',g:'School Uniform',due:'Today',s:0,total:6400,paid:0,tl:'Robert'},
+{id:1041,c:'C-0004',g:'Slacks',due:'Nov 2',s:2,total:950,paid:0,tl:''},
+{id:1040,c:'C-0003',g:'School Uniform',due:'Oct 20',s:3,total:1200,paid:1200,tl:'Ana'},
+{id:1039,c:'C-0003',g:'Barong',due:'Oct 5',s:4,total:3500,paid:3500,tl:'Ana'}];
+let I=[
+{n:'Silk Charmeuse',cat:'Fabric',q:15,u:'m',min:10},
+{n:'Shirt Buttons',cat:'Hardware',q:15,u:'pcs',min:100},
+{n:'Heavy Thread',cat:'Thread',q:2,u:'spools',min:5},
+{n:'Navy Twill',cat:'Fabric',q:42,u:'m',min:20}];
+const R={today:{cl:6,cash:850,gc:620,bars:[6]},week:{cl:46,cash:6250,gc:4560,bars:[5,9,6,11,7,8,0]},month:{cl:171,cash:24300,gc:17900,bars:[22,31,28,40,50]}};
+const RL={today:['Today'],week:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],month:['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5']};
+let S={r:'login',sel:null,of:'All',tf:'All',q:'',rng:'week',cq:'',gt:'School Uniform'};
+const $=s=>document.querySelector(s),peso=n=>'₱'+n.toLocaleString();
+const cu=id=>C.find(c=>c.id==id),od=id=>O.find(o=>o.id==id);
+const bal=o=>o.total-o.paid,low=i=>i.q<=i.min;
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2600)}
+function go(r,sel){S.r=r;if(sel!==undefined)S.sel=sel;if(r!='login')history.replaceState(null,'','#'+r);draw();$('.page')&&($('.page').scrollTop=0)}
+function pill(o){return o.s==4?'<span class="pill">Claimed</span>':o.s==3?'<span class="pill ok">Ready</span>':'<span class="pill in">'+ST[o.s]+'</span>'}
+function pay(o){return bal(o)<=0?'<span class="pill ok">Paid</span>':'<span class="pill bad">'+(o.paid?'Balance '+peso(bal(o)):'Unpaid')+'</span>'}
+function shell(title,act,body){const act0=S.r=='production'?'orders':S.r=='customers'&&0;
+return `<aside><div class="brand"><b>T</b>TahiAn</div>${NAV.map(([k,v])=>`<button class="${S.r==k||(S.r=='order'||S.r=='neworder')&&k=='orders'||S.r=='customer'&&k=='customers'?'on':''}" onclick="go('${k}')"><i></i>${v}</button>`).join('')}<button class="out" onclick="go('login')">Sign out</button></aside>
+<main><div class="top"><input aria-label="Search" placeholder="Search client, order, or fabric ID" value="${S.q}" onkeydown="if(event.key=='Enter'){S.q=this.value;S.of='All';go('orders')}"><div class="who"><span><b>Name</b>Staff</span><div class="av">N</div></div></div>
+<div class="page"><div class="hd"><h1>${title}</h1>${act||''}</div>${body}</div></main>`}
+const HB=`<button class="btn s" onclick="modalCust()">Add customer</button><button class="btn p s" onclick="go('neworder')">+ New order</button>`;
+function otable(list,n){return `<div class="wrap"><table class="tbl"><thead><tr><th>Order ID</th><th>Customer</th><th>Garment</th><th>Due</th><th>Stage</th><th>Payment</th><th>Tailor</th></tr></thead><tbody>${list.slice(0,n||9).map(o=>`<tr class="k" onclick="go('order',${o.id})"><td><b>ORD ${o.id}</b></td><td>${cu(o.c).n}</td><td>${o.g}</td><td>${o.due}</td><td>${pill(o)}</td><td>${pay(o)}</td><td>${o.tl||'<span style="color:var(--mu)">Unassigned</span>'}</td></tr>`).join('')||'<tr><td colspan=7 style="color:var(--mu)">No orders match. Try clearing the filters.</td></tr>'}</tbody></table></div>`}
+const V={
+login(){return `<div id="login"><div class="card"><div class="brand"><b style="background:var(--ac);color:#1b2236;width:34px;height:34px;display:grid;place-items:center;border-radius:9px;font-size:20px">T</b>TahiAn</div><p>Morsons HOME Industries</p><div class="f"><label>User name<input value="staff.robert"></label><label>Password<input type="password" value="password"></label><button class="btn a" onclick="go('home')">Log in</button></div></div></div>`},
+home(){const a=O.filter(o=>o.s<4),lowN=I.filter(low).length;
+return shell('Good morning, shop',HB,`<div class="stats"><button class="stat" onclick="S.of='In progress';go('orders')"><small>Active orders</small><strong>${a.length}</strong>in the shop</button><button class="stat" onclick="S.of='All';go('orders')"><small>Due today</small><strong>${O.filter(o=>o.due=='Today'&&o.s<3).length}</strong>to finish</button><button class="stat" onclick="S.of='Ready for pickup';go('orders')"><small>Ready for pickup</small><strong>${O.filter(o=>o.s==3).length}</strong>${peso(O.filter(o=>o.s==3).reduce((t,o)=>t+bal(o),0))} to collect</button><button class="stat r" onclick="go('inventory')"><small>Low stock materials</small><strong>${lowN}</strong>at or below threshold</button></div><div class="card"><h3>Orders</h3>${otable(O.filter(o=>o.s<4),6)}</div>`)},
+orders(){const q=S.q.toLowerCase();let l=O.filter(o=>(S.of=='All'||S.of=='In progress'&&o.s<3||S.of=='Ready for pickup'&&o.s==3||S.of=='Claimed'&&o.s==4)&&(S.tf=='All'||o.tl==S.tf)&&(!q||(cu(o.c).n+o.g+o.id).toLowerCase().includes(q)));
+return shell('Orders',HB,`<div class="card"><div class="tabs">${['All','In progress','Ready for pickup','Claimed'].map(t=>`<button class="${S.of==t?'on':''}" onclick="S.of='${t}';draw()">${t}</button>`).join('')}<select aria-label="Tailor" class="btn" onchange="S.tf=this.value;draw()">${['All','Robert','Ana'].map(t=>`<option ${S.tf==t?'selected':''} value="${t}">${t=='All'?'All tailors':t}</option>`).join('')}</select>${S.q?`<button onclick="S.q='';draw()">Clear “${S.q}” ✕</button>`:''}</div>${otable(l)}</div>`)},
+order(){const o=od(S.sel),c=cu(o.c),sl=/Slacks/.test(o.g),m=sl?c.l:c.u,first=c.n.split(' ')[0],nx=['Start sewing','Move to fitting','Mark ready for pickup','Mark claimed'][o.s];
+return shell(`${o.g} <span class="pill in" style="font:500 13px 'Public Sans'">${o.s<3?'In progress':ST[o.s]}</span>`,`<button class="btn s" onclick="go('orders')">Back to orders</button>${nx?`<button class="btn a s" onclick="adv(${o.id})">${nx}</button>`:''}<button class="btn s" onclick="recPay(${o.id})">Record payment</button><button class="btn s" onclick="toast('Job slip for ORD ${o.id} sent to printer')">Job slip</button>`,
+`<div class="card"><h3>ORD ${o.id} · ${c.n} · Due ${o.due}</h3>${(()=>`<div class="trk">${ST.slice(0,4).map((n,i)=>`<div class="st ${o.s>i?'done':o.s==i?'cur':''}"><i></i>${n}</div>`).join('')}</div>`)()}</div>
+<div class="g3"><div class="card"><h3>Customer</h3><div class="kv"><span>Name</span><b>${c.n}</b></div><div class="kv"><span>Mobile</span><b>${c.m}</b></div><button class="btn s" onclick="go('customer','${c.id}')">View profile</button></div>
+<div class="card"><h3>Assigned tailor</h3><label><select onchange="od(${o.id}).tl=this.value;toast('Reassigned to '+(this.value||'nobody'));draw()">${['','Robert','Ana'].map(t=>`<option ${o.tl==t?'selected':''} value="${t}">${t||'Unassigned'}</option>`).join('')}</select></label></div>
+<div class="card"><h3>Payment</h3><div class="kv"><span>Total</span>${peso(o.total)}</div><div class="kv"><span>Amount paid</span>${peso(o.paid)}</div><div class="kv t"><span>Balance</span><span style="color:${bal(o)?'var(--thread)':'var(--ok)'}">${peso(bal(o))}</span></div></div></div>
+<div class="g2"><div class="card"><h3>Measurements used</h3>${m?`<div class="meas">${Object.entries(m).map(([k,v])=>`<div><small>${k}</small><b>${v} in</b></div>`).join('')}</div>`:'<p style="color:var(--mu)">No measurements recorded yet.</p><button class="btn s" onclick="toast(\'Measurement form opened\')">Add measurements</button>'}</div>
+<div class="card"><h3>SMS notification</h3>${o.s>=3?`<div class="sms">Hi ${first}! Your ${o.g} (ORD ${o.id}) is ready for pickup at Morsons HOME Industries.${bal(o)?' Balance: '+peso(bal(o))+'.':''}</div>`:'<p style="color:var(--mu);margin:0">Sent automatically when the order moves to Ready.</p>'}</div></div>`)},
+neworder(){const sl=S.gt=='Slacks',cs=C[0];
+return shell('New order',`<button class="btn s" onclick="go('orders')">Cancel</button>`,`<div class="g2"><div><div class="card"><h3>Customer information</h3><div class="f2"><label>Customer<select id="nc">${C.map(c=>`<option value="${c.id}">${c.n} · ${c.m}</option>`).join('')}</select></label><label>Due date<input id="nd" value="Nov 5"></label></div></div>
+<div class="card"><h3>Garment and measurements</h3><div class="f2"><label>Garment type<select id="ng" onchange="S.gt=this.value;draw()">${['School Uniform','School Polo','Slacks','Barong','Filipiniana'].map(g=>`<option ${S.gt==g?'selected':''}>${g}</option>`).join('')}</select></label><label>Assigned tailor<select id="nt"><option>Robert</option><option>Ana</option><option value="">Assign later</option></select></label></div><div class="meas" style="margin:14px 0">${Object.entries(sl?L:U).map(([k,v])=>`<label class="fld"><small>${k} (in)</small><input value="${v}" style="margin:0;border:0;background:none;padding:2px 0;font-weight:600"></label>`).join('')}</div><label>Design notes<textarea rows=3 placeholder="Instructions…"></textarea></label></div></div>
+<div class="card"><h3>Payment</h3><div class="f"><label>Total price<input id="np" type="number" value="1800"></label><label>Down payment<input id="nr" type="number" value="500"></label><div class="tabs"><button class="on" onclick="this.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on'));this.classList.add('on')">Cash</button><button onclick="this.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on'));this.classList.add('on')">GCash</button></div><button class="btn a" onclick="mkOrder()">Create order</button></div></div></div>`)},
+customers(){const q=S.cq.toLowerCase();return shell('Customers',`<button class="btn p s" onclick="modalCust()">Add customer</button>`,`<div class="card"><label><input placeholder="Search by name or mobile number" value="${S.cq}" oninput="S.cq=this.value;draw();const i=$('.card input');i.focus();i.setSelectionRange(99,99)"></label><div class="wrap"><table class="tbl"><thead><tr><th>Customer</th><th>Mobile</th><th>Type</th><th>Measurements</th><th>Orders</th></tr></thead><tbody>${C.filter(c=>!q||(c.n+c.m).toLowerCase().includes(q)).map(c=>`<tr class="k" onclick="go('customer','${c.id}')"><td><b>${c.n}</b><br><small style="color:var(--mu)">${c.id}</small></td><td>${c.m}</td><td>${c.t}</td><td>${c.t=='Bulk'?'Per size':c.u||c.l?'<span class="pill ok">Recorded</span>':'<span class="pill ac">Unrecorded</span>'}</td><td>${O.filter(o=>o.c==c.id).length}</td></tr>`).join('')}</tbody></table></div></div>`)},
+customer(){const c=cu(S.sel),os=O.filter(o=>o.c==c.id);
+return shell(c.n+` <small style="font:400 13px 'Public Sans';color:var(--mu)">${c.id} · ${c.m}</small>`,`<button class="btn s" onclick="go('customers')">Back</button><button class="btn s" onclick="toast('Edit customer opened')">Edit</button><button class="btn p s" onclick="go('neworder')">+ New order</button>`,
+`<div class="g2"><div class="card"><h3>Current saved measurements ${c.d?`<small style="font:400 12px 'Public Sans';color:var(--mu)">Saved ${c.d}</small>`:''}</h3>${c.u||c.l?`<div class="meas">${Object.entries({...c.u,...c.l}).map(([k,v])=>`<div><small>${k}</small><b>${v} in</b></div>`).join('')}</div><br><button class="btn s" onclick="upd('${c.id}')">Update measurements</button>`:`<p style="color:var(--mu)">${c.t=='Bulk'?'Bulk accounts use per-size charts.':'Nothing recorded yet.'}</p><button class="btn s" onclick="upd('${c.id}')">Record measurements</button>`}</div>
+<div class="card"><h3>Measurement history</h3>${c.d?`<div class="kv"><span>${c.d}</span><span class="pill ok">Current</span></div><div class="kv"><span>Sep 22, 2026</span><span style="color:var(--mu)">Chest 36</span></div><div class="kv"><span>Aug 20, 2026</span><span style="color:var(--mu)">Chest 35</span></div>`:'<p style="color:var(--mu);margin:0">No history yet.</p>'}</div></div>
+<div class="card"><h3>Past orders</h3>${os.length?otable(os):'<p style="color:var(--mu);margin:0">No orders yet. Start with a new order.</p>'}</div>`)},
+production(){const f=o=>S.tf=='All'||o.tl==S.tf||S.tf=='Unassigned'&&!o.tl,col=(t,fn)=>{const l=O.filter(o=>fn(o)&&f(o));return `<div class="col"><h3>${t}<span class="pill">${l.length}</span></h3>${l.map(o=>`<div class="kc" onclick="go('order',${o.id})"><small>ORD ${o.id}</small><div><b>${cu(o.c).n}</b></div><small>${o.g}</small><div class="trk" style="margin:10px 0 0;pointer-events:none">${o.s<3?`<div class="bar" style="flex:1"><span style="width:${(o.s+1)*25}%"></span></div>`:''}</div><div class="row">${pill(o)}<small>${o.tl||'Unassigned'}</small>${o.s<4?`<button class="btn s" onclick="event.stopPropagation();adv(${o.id})">${['Next','Next','Ready','Claim'][o.s]}</button>`:''}</div></div>`).join('')||'<small style="color:var(--mu)">Nothing here.</small>'}</div>`};
+return shell('Production',`<div class="tabs" style="margin:0">${['All','Unassigned','Robert','Ana'].map(t=>`<button class="${S.tf==t?'on':''}" onclick="S.tf='${t}';draw()">${t}</button>`).join('')}</div>`,`<div class="board">${col('In progress',o=>o.s<3)}${col('Ready for pickup',o=>o.s==3)}${col('Claimed',o=>o.s==4)}</div>`)},
+inventory(){return shell('Stock inventory',`<button class="btn p s" onclick="I.push({n:'Zipper 7in',cat:'Hardware',q:60,u:'pcs',min:30});toast('Zipper 7in added to stock');draw()">Add item</button>`,`<div class="card"><div class="wrap"><table class="tbl"><thead><tr><th>Item name</th><th>Category</th><th>Stock</th><th>Status</th><th></th></tr></thead><tbody>${I.map((x,i)=>`<tr><td><b>${x.n}</b></td><td>${x.cat}</td><td>${x.q} ${x.u}<div class="bar" style="width:90px;margin-top:4px"><span style="width:${Math.min(100,x.q/(x.min*2)*100)}%;background:${low(x)?'var(--thread)':'var(--ok)'}"></span></div></td><td>${low(x)?'<span class="pill bad">Low</span>':'<span class="pill ok">Healthy</span>'}</td><td><button class="btn s" onclick="I[${i}].q+=I[${i}].min;toast('Restocked ${x.n}: +'+I[${i}].min+' ${x.u}');draw()">Restock</button></td></tr>`).join('')}</tbody></table></div></div>`)},
+reports(){const r=R[S.rng],mx=Math.max(...r.bars,1),gt=[['School Polo',15],['School Blouse',12],['Slacks',8],['Barong',6],['Filipiniana',3]];
+return shell('Reports',`<div class="tabs" style="margin:0">${[['today','Today'],['week','This week'],['month','Last 30 days']].map(([k,v])=>`<button class="${S.rng==k?'on':''}" onclick="S.rng='${k}';draw()">${v}</button>`).join('')}<button onclick="toast('Report exported as tahian-report.csv')">Export</button></div>`,`<div class="stats"><div class="stat"><small>Claimed orders</small><strong>${r.cl}</strong></div><div class="stat"><small>Cash received</small><strong>${peso(r.cash)}</strong></div><div class="stat"><small>GCash received</small><strong>${peso(r.gc)}</strong></div><div class="stat"><small>Total collected</small><strong>${peso(r.cash+r.gc)}</strong></div></div>
+<div class="g2"><div class="card"><h3>Claimed orders per day</h3><div class="chart">${r.bars.map((b,i)=>`<div title="${b} orders"><i style="height:${b/mx*80}%"></i>${RL[S.rng][i]}</div>`).join('')}</div></div><div class="card"><h3>Garment type</h3>${gt.map(([n,v])=>`<div class="kv"><span>${n}</span><b>${v}</b></div>`).join('')}</div></div>`)}};
+function draw(){$('#app').innerHTML=V[S.r]();}
+function adv(id){const o=od(id);o.s++;const c=cu(o.c);toast(o.s==3?`SMS sent to ${c.m}: your ${o.g} is ready for pickup`:o.s==4?`ORD ${id} claimed`:`ORD ${id} moved to ${ST[o.s]}`);draw()}
+function recPay(id){const o=od(id);$('#modal').innerHTML=`<div class="card"><h3>Record payment · ORD ${id}</h3><div class="f"><label>Amount<input id="pa" type="number" value="${bal(o)}"></label><div class="f2"><button class="btn" onclick="closeM()">Cancel</button><button class="btn a" onclick="o=od(${id});o.paid=Math.min(o.total,o.paid+(+$('#pa').value||0));closeM();toast('Payment recorded');draw()">Save payment</button></div></div></div>`;$('#modal').classList.add('on')}
+function modalCust(){$('#modal').innerHTML=`<div class="card"><h3>Add customer</h3><div class="f"><div class="tabs"><button class="on" onclick="this.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on'));this.classList.add('on')">Individual</button><button onclick="this.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on'));this.classList.add('on')">School / Bulk</button></div><div class="f2"><label>First name<input id="cf" value="Lrizz"></label><label>Last name<input id="cl" value="Nathan"></label></div><label>Mobile number<input id="cm" value="0939 519 6970"></label><label>Address (optional)<input placeholder="Brgy. Tibanga"></label><div class="f2"><button class="btn" onclick="closeM()">Cancel</button><button class="btn a" onclick="saveC()">Save customer</button></div></div></div>`;$('#modal').classList.add('on')}
+function saveC(){const n=($('#cf').value+' '+$('#cl').value).trim();C.push({id:'C-000'+(C.length+1),n,m:$('#cm').value,t:'Individual',u:null,l:null});closeM();toast(n+' added to customers');go('customers')}
+function closeM(){$('#modal').classList.remove('on')}
+function upd(id){const c=cu(id);c.u={...U};c.l={...L};c.d='Oct 30, 2026';toast('Measurements saved for '+c.n);draw()}
+function mkOrder(){const id=O[0].id+1+O.length*0,t=+$('#np').value||0,n=Math.max(...O.map(o=>o.id))+1;O.unshift({id:n,c:$('#nc').value,g:$('#ng').value,due:$('#nd').value,s:0,total:t,paid:Math.min(t,+$('#nr').value||0),tl:$('#nt').value});toast('ORD '+n+' created');S.of='All';go('orders')}
+$('#modal').addEventListener('click',e=>{if(e.target.id=='modal')closeM()});
+document.addEventListener('keydown',e=>{if(e.key=='Escape')closeM()});
+draw();
+</script>
+</body>
+</html>
