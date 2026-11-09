@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TahiAn - Interactive Prototype</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    [x-cloak] { display: none !important; }
+  </style>
+</head>
+
+<body class="bg-slate-50 text-slate-900 antialiased flex h-screen overflow-hidden" x-data="{ currentTab: 'dashboard', addCustomerModal: false, loggedIn: false }">
+
+    <!-- LOGIN SCREEN -->
+<div x-show="!loggedIn" class="fixed inset-0 z-[100] bg-white grid lg:grid-cols-2"
+     x-data="{
+       username: '', password: '', showPw: false, error: '',
+       login() {
+         const ok = this.username.trim().toLowerCase() === 'admin' && this.password === 'tahian123';
+         this.error = ok ? '' : 'Username or password is incorrect.';
+         if (ok) this.password = '';
+         return ok;
+       }
+     }">
+
+  <!-- Left: brand panel -->
+  <div class="hidden lg:flex relative flex-col justify-between bg-slate-900 text-white p-12 overflow-hidden">
+    <div class="absolute -right-24 -top-24 w-96 h-96 rounded-full border border-white/5"></div>
+    <div class="absolute -right-10 -top-10 w-72 h-72 rounded-full border border-white/5"></div>
+    <div class="absolute -left-20 bottom-10 w-80 h-80 rounded-full border border-white/5"></div>
+
+    <div class="relative flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-white/10 ring-1 ring-white/20 flex items-center justify-center"><i data-lucide="scissors" class="w-5 h-5"></i></div>
+      <span class="text-xl font-bold tracking-tight">TahiAn</span>
+    </div>
+
+    <div class="relative max-w-md">
+      <h2 class="text-4xl font-bold tracking-tight leading-tight">Hello, Morsons HOME Industries!</h2>
+      <p class="mt-4 text-slate-300 leading-relaxed">Keep measurements, orders, stock and payments in one place, from the first fitting to pickup day.</p>
+    </div>
+
+    <p class="relative text-xs text-slate-500">© 2026 TahiAn · CCC181 Project</p>
+  </div>
+
+  <!-- Right: form -->
+  <div class="flex items-center justify-center p-6 sm:p-12">
+    <div class="w-full max-w-sm">
+      <div class="lg:hidden flex items-center gap-3 mb-8">
+        <div class="w-9 h-9 rounded-lg bg-slate-900 flex items-center justify-center text-white"><i data-lucide="scissors" class="w-4 h-4"></i></div>
+        <span class="text-xl font-bold tracking-tight">TahiAn</span>
+      </div>
+
+      <h1 class="text-3xl font-bold tracking-tight">Welcome back!</h1>
+      <p class="mt-2 text-sm text-slate-500">Sign in with the account the shop manager gave you.</p>
+
+      <form @submit.prevent="login() && (loggedIn = true)" class="mt-8 space-y-5">
+        <div>
+          <label for="login-user" class="block text-sm font-medium text-slate-700 mb-1.5">Username</label>
+          <input id="login-user" type="text" x-model="username" autocomplete="username" required placeholder="Enter your username"
+                 class="w-full h-11 rounded-lg border border-slate-300 bg-white px-3 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-500 transition" />
+        </div>
+        <div>
+          <label for="login-pass" class="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+          <div class="relative">
+            <input id="login-pass" :type="showPw ? 'text' : 'password'" x-model="password" autocomplete="current-password" required placeholder="Enter your password"
+                   class="w-full h-11 rounded-lg border border-slate-300 bg-white pl-3 pr-16 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-500 transition" />
+            <button type="button" @click="showPw = !showPw" class="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-xs font-medium text-slate-500 hover:text-slate-900" x-text="showPw ? 'Hide' : 'Show'"></button>
+          </div>
+        </div>
+
+        <p x-show="error" class="text-xs text-rose-600" style="display: none;" x-text="error"></p>
+
+        <button type="submit" class="w-full h-11 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 active:bg-slate-950 transition">Sign in</button>
+      </form>
+
+      <p class="mt-6 text-center text-sm text-slate-500">Forgot your password? <span class="font-medium text-slate-900">Ask the shop manager.</span></p>
+      <p class="mt-8 text-center text-xs text-slate-400">Prototype demo: <span class="font-medium text-slate-500">admin</span> / <span class="font-medium text-slate-500">tahian123</span></p>
+    </div>
+  </div>
+</div>
+
+  <!-- Left Sidebar -->
+  <aside class="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0 print:hidden">
+    <div class="h-16 flex items-center px-6 gap-3 border-b border-slate-100">
+      <div class="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white font-bold text-lg">
+        <i data-lucide="scissors" class="w-4 h-4"></i>
+      </div>
+      <span class="text-xl font-bold tracking-tight text-slate-900">TahiAn</span>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 px-4 py-4 space-y-1">
+      
+      <a href="#" @click.prevent="currentTab = 'dashboard'" 
+         :class="currentTab === 'dashboard' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'" 
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition">
+        <i data-lucide="home" class="w-4 h-4" :class="currentTab === 'dashboard' ? 'text-white' : 'text-slate-400'"></i> Home (Dashboard)
+      </a>
+
+      <a href="#" @click.prevent="currentTab = 'orders'"
+   :class="['orders','order_details','create_order'].includes(currentTab) ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
+   class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition">
+  <i data-lucide="clipboard-list" class="w-4 h-4" :class="['orders','order_details','create_order'].includes(currentTab) ? 'text-white' : 'text-slate-400'"></i> Orders
+</a>
+
+      <a href="#" @click.prevent="currentTab = 'kanban'" 
+         :class="currentTab === 'kanban' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'" 
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition">
+        <i data-lucide="kanban" class="w-4 h-4" :class="currentTab === 'kanban' ? 'text-white' : 'text-slate-400'"></i> Production Kanban
+      </a>
+
+      <a href="#" @click.prevent="currentTab = 'customers'" 
+         :class="currentTab === 'customers' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'" 
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition">
+        <i data-lucide="users" class="w-4 h-4" :class="currentTab === 'customers' ? 'text-white' : 'text-slate-400'"></i> Customers
+      </a>
+
+      <a href="#" @click.prevent="currentTab = 'inventory'" 
+         :class="currentTab === 'inventory' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'" 
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition">
+        <i data-lucide="box" class="w-4 h-4" :class="currentTab === 'inventory' ? 'text-white' : 'text-slate-400'"></i> Inventory
+      </a>
+
+        <a href="#" @click.prevent="currentTab = 'reports'"
+        :class="currentTab === 'reports' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
+        class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition">
+        <i data-lucide="bar-chart-3" class="w-4 h-4" :class="currentTab === 'reports' ? 'text-white' : 'text-slate-400'"></i> Reports
+      </a>
+
+    </nav>
+  </aside>
+
+  <!-- MAIN WORKSPACE -->
+  <div class="flex-1 flex flex-col min-w-0 overflow-y-auto print:hidden">
+    
+    <!-- Top Navbar -->
+    <header class="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0">
+      <div class="relative w-96">
+        <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        <input type="text" placeholder="Client, order, or Fabric ID" class="w-full pl-10 pr-4 py-2 bg-slate-100 rounded-lg text-sm border-none focus:ring-2 focus:ring-slate-900"/>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="text-right">
+          <div class="text-sm font-semibold text-slate-900">Name</div>
+          <div class="text-xs text-slate-500 leading-none">Staff</div>
+        </div>
+          <!-- Avatar -->
+        <div class="w-9 h-9 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center text-slate-600">
+          <i data-lucide="user" class="w-4 h-4"></i>
+        </div>
+
+          <!-- Log out button -->
+        <button type="button" @click="loggedIn = false; currentTab = 'dashboard'"
+        class="h-9 px-3 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-600 hover:bg-slate-50 inline-flex items-center gap-1.5 transition">
+  <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Log out
+</button>
+      </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 p-8 max-w-7xl w-full mx-auto">
+      
+
+    </main>
+  </div>
+
+  <script>
+    lucide.createIcons();
+    document.addEventListener('alpine:initialized', () => {
+      Alpine.effect(() => { lucide.createIcons(); });
+    });
+  </script>
+
+</body>
+</html>
