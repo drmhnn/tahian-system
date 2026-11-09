@@ -166,8 +166,920 @@
 
     <!-- Main Container -->
     <main class="flex-1 p-8 max-w-7xl w-full mx-auto">
-      
 
+<!-- SCREEN 1: Dashboard -->
+      <div x-show="currentTab === 'dashboard'" x-cloak>
+        
+        <!-- Page header + actions -->
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <p class="text-xs font-medium text-slate-500">Home <span class="text-slate-300">/</span> <span class="text-slate-700">Overview</span></p>
+            <h1 class="text-2xl font-semibold tracking-tight mt-1">Dashboard</h1>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" class="h-10 px-4 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 inline-flex items-center gap-2 shadow-sm hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/20 transition">
+              <i data-lucide="user-plus" class="w-4 h-4"></i> Add Customer
+            </button>
+            <button type="button" @click="currentTab = 'create_order'" class="h-10 px-4 rounded-lg bg-slate-900 text-white text-sm font-semibold inline-flex items-center gap-2 shadow-sm hover:bg-slate-800 active:bg-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-900 transition">
+              <i data-lucide="plus" class="w-4 h-4 stroke-[2.5]"></i> New Order
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI cards -->
+        <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-6">
+
+          <!-- Active Orders -->
+          <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5 flex flex-col">
+            <header class="flex items-start justify-between gap-2 min-h-[36px]">
+              <h2 class="text-sm font-medium text-slate-600 leading-tight">Active Orders</h2>
+              <span class="grid place-items-center w-9 h-9 shrink-0 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="clock" class="w-4 h-4"></i></span>
+            </header>
+            <p class="mt-3 text-3xl font-bold tracking-tight tabular">15</p>
+            <p class="mt-1 text-xs text-slate-500">Orders</p>
+          </section>
+          
+          <!-- Due Today -->
+          <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5 flex flex-col">
+            <header class="flex items-start justify-between gap-2 min-h-[36px]">
+              <h2 class="text-sm font-medium text-slate-600 leading-tight">Due Today</h2>
+              <span class="grid place-items-center w-9 h-9 shrink-0 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="calendar-clock" class="w-4 h-4"></i></span>
+            </header>
+            <p class="mt-3 text-3xl font-bold tracking-tight tabular">1</p>
+            <p class="mt-1 text-xs text-slate-500">0 overdue</p>
+          </section>
+
+          <!-- Ready for Pickup -->
+          <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5 flex flex-col">
+            <header class="flex items-start justify-between gap-2 min-h-[36px]">
+              <h2 class="text-sm font-medium text-slate-600 leading-tight">Ready for Pickup</h2>
+              <span class="grid place-items-center w-9 h-9 shrink-0 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="package-check" class="w-4 h-4"></i></span>
+            </header>
+            <p class="mt-3 text-3xl font-bold tracking-tight tabular">2</p>
+            <p class="mt-1 text-xs text-slate-500">₱600 to collect</p>
+          </section>
+
+          <!-- Low Stock Materials -->
+          <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5 flex flex-col">
+            <header class="flex items-start justify-between gap-2 min-h-[36px]">
+              <h2 class="text-sm font-medium text-slate-600 leading-tight">Low Stock Materials</h2>
+              <span class="grid place-items-center w-9 h-9 shrink-0 rounded-lg bg-rose-50 text-rose-600"><i data-lucide="alert-triangle" class="w-4 h-4"></i></span>
+            </header>
+            <p class="mt-3 text-3xl font-bold tracking-tight tabular">3</p>
+            <p class="mt-1 text-xs text-rose-600 font-medium">At or below threshold</p>
+          </section>
+        </div>
+
+        <!-- Orders table -->
+        <section class="mt-6 bg-white rounded-xl border border-slate-200 shadow-sm">
+          <header class="flex items-center gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
+            <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="clipboard-list" class="w-[18px] h-[18px]"></i></span>
+            <div class="flex-1">
+              <h2 class="text-[15px] font-semibold leading-tight">Orders</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Recent orders across all stages</p>
+            </div>
+            <a href="#" class="text-sm font-medium text-slate-600 hover:text-slate-900 inline-flex items-center gap-1">
+              View all <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </a>
+          </header>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-slate-50 border-b border-slate-100">
+                <tr>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Order ID</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Customer</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Garment Type</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Due Date</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Stage</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Payment</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Assigned To</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Row 1 -->
+                <tr class="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/70 transition cursor-pointer">
+                  <td class="px-5 py-4 whitespace-nowrap font-semibold text-slate-900 tabular">ORD 1042</td>
+                  <td class="px-5 py-4 whitespace-nowrap font-medium text-slate-800">Maria Santos</td>
+                  <td class="px-5 py-4 whitespace-nowrap text-slate-700">
+                    <span class="inline-flex items-center gap-1.5"><i data-lucide="shirt" class="w-3.5 h-3.5 text-slate-400"></i> Uniform</span>
+                  </td>
+                  <td class="px-5 py-4 whitespace-nowrap text-slate-700">Today</td>
+                  <td class="px-5 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset whitespace-nowrap bg-amber-50 text-amber-700 ring-amber-200">
+                      <i data-lucide="clock" class="w-3 h-3 stroke-[2.5]"></i> In Progress
+                    </span>
+                  </td>
+                  <td class="px-5 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset whitespace-nowrap bg-rose-50 text-rose-700 ring-rose-200">
+                      <i data-lucide="circle-dashed" class="w-3 h-3 stroke-[2.5]"></i> Unpaid
+                    </span>
+                  </td>
+                  <td class="px-5 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center gap-2 text-slate-800 font-medium">
+                      <span class="grid place-items-center w-7 h-7 rounded-full text-[11px] font-semibold ring-1 bg-sky-100 text-sky-800 ring-sky-200">R</span> Robert
+                    </span>
+                  </td>
+                </tr>
+                <!-- Row 2 -->
+                <tr class="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/70 transition cursor-pointer">
+                  <td class="px-5 py-4 whitespace-nowrap font-semibold text-slate-900 tabular">ORD 1041</td>
+                  <td class="px-5 py-4 whitespace-nowrap font-medium text-slate-800">Daniel Migz</td>
+                  <td class="px-5 py-4 whitespace-nowrap text-slate-700">
+                    <span class="inline-flex items-center gap-1.5"><i data-lucide="shirt" class="w-3.5 h-3.5 text-slate-400"></i> School Uniform</span>
+                  </td>
+                  <td class="px-5 py-4 whitespace-nowrap text-slate-700">Today</td>
+                  <td class="px-5 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset whitespace-nowrap bg-emerald-50 text-emerald-700 ring-emerald-200">
+                      <i data-lucide="package-check" class="w-3 h-3 stroke-[2.5]"></i> Ready
+                    </span>
+                  </td>
+                  <td class="px-5 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset whitespace-nowrap bg-emerald-50 text-emerald-700 ring-emerald-200">
+                      <i data-lucide="check-circle-2" class="w-3 h-3 stroke-[2.5]"></i> Paid
+                    </span>
+                  </td>
+                  <td class="px-5 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center gap-2 text-slate-800 font-medium">
+                      <span class="grid place-items-center w-7 h-7 rounded-full text-[11px] font-semibold ring-1 bg-violet-100 text-violet-800 ring-violet-200">A</span> Ana
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+
+
+
+      <!-- SCREEN 4: Production Kanban -->
+      <div x-show="currentTab === 'kanban'" x-cloak x-data="{ tailorFilter: 'All' }">
+        
+        <!-- Page Header -->
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <p class="text-xs font-medium text-slate-500">Workflow <span class="text-slate-300">/</span> <span class="text-slate-700">Production board</span></p>
+            <h1 class="text-2xl font-semibold tracking-tight mt-1">Production</h1>
+          </div>
+
+          <!-- Filter Of Tailors -->
+          <div class="flex flex-wrap items-center gap-1 p-1 rounded-lg bg-white border border-slate-200 shadow-sm">
+            <!-- All -->
+            <button type="button" @click="tailorFilter = 'All'"
+              :class="tailorFilter === 'All' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
+              class="inline-flex items-center gap-2 h-8 px-3 rounded-md text-sm font-medium transition">
+              All
+            </button>
+            
+            <!-- Unassigned -->
+            <button type="button" @click="tailorFilter = 'Unassigned'"
+              :class="tailorFilter === 'Unassigned' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
+              class="inline-flex items-center gap-2 h-8 px-3 rounded-md text-sm font-medium transition">
+              <i data-lucide="user-x" class="w-3.5 h-3.5"></i> Unassigned
+            </button>
+            
+            <!-- Robert -->
+            <button type="button" @click="tailorFilter = 'Robert'"
+              :class="tailorFilter === 'Robert' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
+              class="inline-flex items-center gap-2 h-8 px-3 rounded-md text-sm font-medium transition">
+              <span class="grid place-items-center w-5 h-5 rounded-full text-[10px] font-semibold ring-1 bg-sky-100 text-sky-800 ring-sky-200">R</span> Robert
+            </button>
+            
+            <!-- Ana -->
+            <button type="button" @click="tailorFilter = 'Ana'"
+              :class="tailorFilter === 'Ana' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
+              class="inline-flex items-center gap-2 h-8 px-3 rounded-md text-sm font-medium transition">
+              <span class="grid place-items-center w-5 h-5 rounded-full text-[10px] font-semibold ring-1 bg-violet-100 text-violet-800 ring-violet-200">A</span> Ana
+            </button>
+          </div>
+        </div>
+
+        <!-- Kanban Board Columns -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+          
+          <!-- Column 1: In Progress -->
+          <section class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col md:min-h-[420px]">
+            <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
+              <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="clock" class="w-4 h-4"></i></span>
+              <div class="flex-1 min-w-0">
+                <h2 class="text-[15px] font-semibold leading-tight flex items-center gap-2">
+                  In Progress
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Active production
+                </p>
+              </div>
+            </header>
+            
+            <div class="flex-1 p-4 space-y-3 bg-slate-50/60 rounded-b-xl">
+
+              <!-- BOX: ORD 1043 -->
+              <article x-show="tailorFilter === 'All' || tailorFilter === 'Robert'" @click="currentTab = 'order_details'"
+                class="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 transition hover:border-slate-300 hover:shadow-md cursor-pointer">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-base font-bold tracking-tight text-slate-900 tabular">ORD 1043</p>
+                    <p class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+                      <i data-lucide="shirt" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> <span class="truncate">School Polo</span>
+                    </p>
+                  </div>
+                  <span class="grid place-items-center w-8 h-8 rounded-full text-xs font-semibold ring-1 bg-sky-100 text-sky-800 ring-sky-200">R</span>
+                </div>
+                <p class="mt-2 flex items-center gap-1.5 text-[13px] text-slate-500 truncate">
+                  <i data-lucide="user" class="w-3.5 h-3.5 shrink-0"></i> Lance Sacay
+                </p>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <span class="inline-flex items-center gap-1.5 text-xs text-slate-500">
+                    <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Today
+                  </span>
+                  <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-inset ring-slate-200 tabular">PHP 1,300 Balance</span>
+                </div>
+              </article>
+
+              <!-- BOX: ORD 1042 -->
+              <article x-show="tailorFilter === 'All' || tailorFilter === 'Ana'" @click="currentTab = 'order_details'"
+                class="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 transition hover:border-slate-300 hover:shadow-md cursor-pointer">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-base font-bold tracking-tight text-slate-900 tabular">ORD 1042</p>
+                    <p class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+                      <i data-lucide="shirt" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> <span class="truncate">Uniform</span>
+                    </p>
+                  </div>
+                  <span class="grid place-items-center w-8 h-8 rounded-full text-xs font-semibold ring-1 bg-violet-100 text-violet-800 ring-violet-200">A</span>
+                </div>
+                <p class="mt-2 flex items-center gap-1.5 text-[13px] text-slate-500 truncate">
+                  <i data-lucide="user" class="w-3.5 h-3.5 shrink-0"></i> Maria Santos
+                </p>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <span class="inline-flex items-center gap-1.5 text-xs text-slate-500">
+                    <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Today
+                  </span>
+                  <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-inset ring-slate-200 tabular">PHP 800 Balance</span>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <!-- Column 2: Ready for Pick up -->
+          <section class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col md:min-h-[420px]">
+            <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
+              <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="package-check" class="w-4 h-4"></i></span>
+              <div class="flex-1 min-w-0">
+                <h2 class="text-[15px] font-semibold leading-tight flex items-center gap-2">
+                  Ready for Pick up
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span> Ready for customer
+                </p>
+              </div>
+            </header>
+            
+            <div class="flex-1 p-4 space-y-3 bg-slate-50/60 rounded-b-xl">
+              <!-- BOX: ORD 1041 -->
+              <article x-show="tailorFilter === 'All' || tailorFilter === 'Robert'" @click="currentTab = 'order_details'"
+                class="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 transition hover:border-slate-300 hover:shadow-md cursor-pointer">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-base font-bold tracking-tight text-slate-900 tabular">ORD 1041</p>
+                    <p class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+                      <i data-lucide="shirt" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> <span class="truncate">School Uniform</span>
+                    </p>
+                  </div>
+                  <span class="grid place-items-center w-8 h-8 rounded-full text-xs font-semibold ring-1 bg-sky-100 text-sky-800 ring-sky-200">R</span>
+                </div>
+                <p class="mt-2 flex items-center gap-1.5 text-[13px] text-slate-500 truncate">
+                  <i data-lucide="user" class="w-3.5 h-3.5 shrink-0"></i> Daniel Migz
+                </p>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <span class="inline-flex items-center gap-1.5 text-xs text-slate-500">
+                    <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Today
+                  </span>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                    <i data-lucide="check-circle-2" class="w-3 h-3 stroke-[2.5]"></i> Paid
+                  </span>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <!-- Column 3: Claimed -->
+          <section class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col md:min-h-[420px]">
+            <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
+              <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="circle-check-big" class="w-4 h-4"></i></span>
+              <div class="flex-1 min-w-0">
+                <h2 class="text-[15px] font-semibold leading-tight flex items-center gap-2">
+                  Claimed
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Completed orders
+                </p>
+              </div>
+            </header>
+            
+            <div class="flex-1 p-4 space-y-3 bg-slate-50/60 rounded-b-xl">
+              <!-- BOX: ORD 1040 -->
+              <article x-show="tailorFilter === 'All' || tailorFilter === 'Ana'" @click="currentTab = 'order_details'"
+                class="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 transition hover:border-slate-300 hover:shadow-md cursor-pointer">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-base font-bold tracking-tight text-slate-900 tabular">ORD 1040</p>
+                    <p class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+                      <i data-lucide="shirt" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> <span class="truncate">School Uniform</span>
+                    </p>
+                  </div>
+                  <span class="grid place-items-center w-8 h-8 rounded-full text-xs font-semibold ring-1 bg-violet-100 text-violet-800 ring-violet-200">A</span>
+                </div>
+                <p class="mt-2 flex items-center gap-1.5 text-[13px] text-slate-500 truncate">
+                  <i data-lucide="user" class="w-3.5 h-3.5 shrink-0"></i> Jon Berd
+                </p>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <span class="inline-flex items-center gap-1.5 text-xs text-slate-500">
+                    <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Oct 20
+                  </span>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                    <i data-lucide="check-circle-2" class="w-3 h-3 stroke-[2.5]"></i> Paid
+                  </span>
+                </div>
+              </article>
+
+              <!-- BOX: ORD 1039 -->
+              <article x-show="tailorFilter === 'All' || tailorFilter === 'Unassigned'" @click="currentTab = 'order_details'"
+                class="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 transition hover:border-slate-300 hover:shadow-md cursor-pointer">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-base font-bold tracking-tight text-slate-900 tabular">ORD 1039</p>
+                    <p class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+                      <i data-lucide="shirt" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> <span class="truncate">PE Uniform × 30</span>
+                    </p>
+                  </div>
+                  <span class="grid place-items-center w-8 h-8 rounded-full border border-dashed border-slate-300 bg-white text-slate-400 text-xs"><i data-lucide="user-x" class="w-3.5 h-3.5"></i></span>
+                </div>
+                <p class="mt-2 flex items-center gap-1.5 text-[13px] text-slate-500 truncate">
+                  <i data-lucide="user" class="w-3.5 h-3.5 shrink-0"></i> MSU IIT
+                </p>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <span class="inline-flex items-center gap-1.5 text-xs text-slate-500">
+                    <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Oct 5
+                  </span>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                    <i data-lucide="check-circle-2" class="w-3 h-3 stroke-[2.5]"></i> Paid
+                  </span>
+                </div>
+              </article>
+            </div>
+          </section>
+
+        </div>
+
+      </div>
+
+<!-- SCREEN 5: Customers Page -->
+      <div x-show="currentTab === 'customers'" x-cloak 
+           x-data="{ 
+             searchQuery: '', 
+             filterType: 'All',
+             customers: [
+               { id: 'C-0001', name: 'Lance Sacay', mobile: '09271251255', type: 'Individual', measurements: 'Recorded', orders: 1, initials: 'LS', color: 'bg-slate-900 text-white' },
+               { id: 'C-0002', name: 'MSU IIT', mobile: '09121512616', type: 'Bulk', measurements: 'Per Size', orders: 4, initials: 'MI', color: 'bg-violet-100 text-violet-800' },
+               { id: 'C-0003', name: 'Jon Berd', mobile: '09682951862', type: 'Individual', measurements: 'Recorded', orders: 2, initials: 'JB', color: 'bg-slate-900 text-white' },
+               { id: 'C-0004', name: 'Maria Santos', mobile: '09175550142', type: 'Individual', measurements: 'Recorded', orders: 1, initials: 'MS', color: 'bg-slate-900 text-white' },
+               { id: 'C-0005', name: 'Daniel Migz', mobile: '09284410923', type: 'Individual', measurements: 'Unrecorded', orders: 1, initials: 'DM', color: 'bg-slate-900 text-white' }
+             ],
+             get filteredCustomers() {
+               const term = this.searchQuery.trim().toLowerCase().replace(/\s+/g, '');
+               return this.customers.filter(c => 
+                 (this.filterType === 'All' || c.type === this.filterType) &&
+                 (!term || c.name.toLowerCase().replace(/\s+/g, '').includes(term) || c.mobile.includes(term) || c.id.toLowerCase().includes(term))
+               );
+             },
+             formatPhone(n) { return `${n.slice(0, 4)} ${n.slice(4, 7)} ${n.slice(7)}`; }
+           }">
+        
+        <!-- Page Header -->
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <p class="text-xs font-medium text-slate-500">Customer <span class="text-slate-300">/</span> <span class="text-slate-700">Directory</span></p>
+            <h1 class="text-2xl font-semibold tracking-tight mt-1">Customers</h1>
+          </div>
+          <button type="button" @click="addCustomerModal = true" class="h-10 px-4 rounded-lg bg-slate-900 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm hover:bg-slate-800 active:bg-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-900 transition self-start sm:self-auto">
+            <i data-lucide="user-plus" class="w-4 h-4"></i> Add Customer
+          </button>
+        </div>
+
+        <!-- Main Container Background -->
+        <section class="bg-white rounded-xl border border-slate-200 shadow-sm">
+          
+          <!-- Search and filter bar -->
+          <div class="flex flex-col md:flex-row md:items-center gap-3 px-5 py-4 border-b border-slate-100">
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-[17px] h-[17px] absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+              <input type="search" x-model="searchQuery" placeholder="Search by name or mobile number..." aria-label="Search customers" class="w-full h-11 rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-500 transition" />
+            </div>
+            <div role="tablist" aria-label="Filter by customer type" class="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 self-start md:self-auto">
+              <button role="tab" @click="filterType = 'All'" :class="filterType === 'All' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'" class="h-9 px-3.5 rounded-md text-sm font-medium transition">All</button>
+              <button role="tab" @click="filterType = 'Individual'" :class="filterType === 'Individual' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'" class="h-9 px-3.5 rounded-md text-sm font-medium transition">Individual</button>
+              <button role="tab" @click="filterType = 'Bulk'" :class="filterType === 'Bulk' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'" class="h-9 px-3.5 rounded-md text-sm font-medium transition">Bulk</button>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-slate-50 border-b border-slate-100">
+                <tr>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Customer</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Mobile</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Type</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Measurements</th>
+                  <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">Orders</th>
+                  <th class="w-10" aria-hidden="true"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="c in filteredCustomers" :key="c.id">
+                  <tr @click="currentTab = 'customer_profile'" tabindex="0" class="group border-b border-slate-100 last:border-b-0 hover:bg-slate-50/80 focus:bg-slate-50 focus:outline-none transition cursor-pointer">
+                    <td class="px-5 py-4 whitespace-nowrap">
+                      <div class="flex items-center gap-3">
+                        <span :class="c.color" class="grid place-items-center w-9 h-9 rounded-full text-xs font-semibold shrink-0" x-text="c.initials"></span>
+                        <div class="leading-tight">
+                          <p class="font-semibold text-slate-900" x-text="c.name"></p>
+                          <p class="mt-0.5 text-xs text-slate-500 tabular" x-text="c.id"></p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-5 py-4 whitespace-nowrap text-slate-700 tabular">
+                      <span class="inline-flex items-center gap-1.5"><i data-lucide="phone" class="w-[13px] h-[13px] text-slate-400"></i> <span x-text="formatPhone(c.mobile)"></span></span>
+                    </td>
+                    <td class="px-5 py-4 whitespace-nowrap">
+                      <template x-if="c.type === 'Bulk'">
+                        <span class="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700 ring-1 ring-inset ring-violet-200">
+                          <i data-lucide="building-2" class="w-3 h-3 stroke-[2.25]"></i> Bulk
+                        </span>
+                      </template>
+                      <template x-if="c.type === 'Individual'">
+                        <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-slate-200">
+                          <i data-lucide="user-round" class="w-3 h-3 stroke-[2.25]"></i> Individual
+                        </span>
+                      </template>
+                    </td>
+                    <td class="px-5 py-4 whitespace-nowrap">
+                      <template x-if="c.measurements === 'Recorded'">
+                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                          <i data-lucide="check-circle-2" class="w-3 h-3 stroke-[2.5]"></i> Recorded
+                        </span>
+                      </template>
+                      <template x-if="c.measurements === 'Per Size'">
+                        <span class="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 ring-1 ring-inset ring-sky-200">
+                          <i data-lucide="ruler" class="w-3 h-3 stroke-[2.25]"></i> Per Size
+                        </span>
+                      </template>
+                      <template x-if="c.measurements === 'Unrecorded'">
+                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
+                          <i data-lucide="circle-dashed" class="w-3 h-3 stroke-[2.5]"></i> Unrecorded
+                        </span>
+                      </template>
+                    </td>
+                    <td class="px-5 py-4 whitespace-nowrap text-right">
+                      <span class="inline-flex min-w-[2rem] justify-center rounded-md bg-slate-100 px-2 py-0.5 text-sm font-semibold text-slate-800 tabular" x-text="c.orders"></span>
+                    </td>
+                    <td class="pr-4 text-slate-300 group-hover:text-slate-500 transition">
+                      <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </td>
+                  </tr>
+                </template>
+
+                <!-- Empty State (No matching records) -->
+                <tr x-show="filteredCustomers.length === 0" style="display: none;">
+                  <td colspan="6" class="px-5 py-14 text-center">
+                    <i data-lucide="search-x" class="mx-auto w-[22px] h-[22px] text-slate-400"></i>
+                    <p class="mt-2 text-sm font-medium text-slate-700">No customers match "<span x-text="searchQuery"></span>"</p>
+                    <p class="text-xs text-slate-500 mt-0.5">Try a different name or mobile number, or add a new customer.</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <footer class="flex items-center justify-between px-5 py-3 border-t border-slate-100 text-xs text-slate-500">
+            <span>Showing <span class="font-semibold text-slate-700 tabular" x-text="filteredCustomers.length"></span> of <span class="tabular" x-text="customers.length"></span> customers</span>
+            <span class="hidden sm:inline">Click a row to view the customer profile</span>
+          </footer>
+        </section>
+
+      </div>
+
+<!-- SCREEN 4: Production Kanban -->
+      <div x-show="currentTab === 'kanban'" x-cloak x-data="{ tailorFilter: 'All' }">
+        
+        <!-- Page Header -->
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <p class="text-xs font-medium text-slate-500">Workflow <span class="text-slate-300">/</span> <span class="text-slate-700">Production board</span></p>
+            <h1 class="text-2xl font-semibold tracking-tight mt-1">Production</h1>
+          </div>
+
+          <!-- Filter Of Tailors -->
+          <div class="flex flex-wrap items-center gap-1 p-1 rounded-lg bg-white border border-slate-200 shadow-sm">
+            <!-- All -->
+            <button type="button" @click="tailorFilter = 'All'"
+              :class="tailorFilter === 'All' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
+              class="inline-flex items-center gap-2 h-8 px-3 rounded-md text-sm font-medium transition">
+              All
+            </button>
+            
+            <!-- Unassigned -->
+            <button type="button" @click="tailorFilter = 'Unassigned'"
+              :class="tailorFilter === 'Unassigned' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
+              class="inline-flex items-center gap-2 h-8 px-3 rounded-md text-sm font-medium transition">
+              <i data-lucide="user-x" class="w-3.5 h-3.5"></i> Unassigned
+            </button>
+            
+            <!-- Robert -->
+            <button type="button" @click="tailorFilter = 'Robert'"
+              :class="tailorFilter === 'Robert' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
+              class="inline-flex items-center gap-2 h-8 px-3 rounded-md text-sm font-medium transition">
+              <span class="grid place-items-center w-5 h-5 rounded-full text-[10px] font-semibold ring-1 bg-sky-100 text-sky-800 ring-sky-200">R</span> Robert
+            </button>
+            
+            <!-- Ana -->
+            <button type="button" @click="tailorFilter = 'Ana'"
+              :class="tailorFilter === 'Ana' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
+              class="inline-flex items-center gap-2 h-8 px-3 rounded-md text-sm font-medium transition">
+              <span class="grid place-items-center w-5 h-5 rounded-full text-[10px] font-semibold ring-1 bg-violet-100 text-violet-800 ring-violet-200">A</span> Ana
+            </button>
+          </div>
+        </div>
+
+        <!-- Kanban Board Columns -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+          
+          <!-- Column 1: In Progress -->
+          <section class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col md:min-h-[420px]">
+            <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
+              <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="clock" class="w-4 h-4"></i></span>
+              <div class="flex-1 min-w-0">
+                <h2 class="text-[15px] font-semibold leading-tight flex items-center gap-2">
+                  In Progress
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Active production
+                </p>
+              </div>
+            </header>
+            
+            <div class="flex-1 p-4 space-y-3 bg-slate-50/60 rounded-b-xl">
+
+              <!-- BOX: ORD 1043 -->
+              <article x-show="tailorFilter === 'All' || tailorFilter === 'Robert'" @click="currentTab = 'order_details'"
+                class="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 transition hover:border-slate-300 hover:shadow-md cursor-pointer">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-base font-bold tracking-tight text-slate-900 tabular">ORD 1043</p>
+                    <p class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+                      <i data-lucide="shirt" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> <span class="truncate">School Polo</span>
+                    </p>
+                  </div>
+                  <span class="grid place-items-center w-8 h-8 rounded-full text-xs font-semibold ring-1 bg-sky-100 text-sky-800 ring-sky-200">R</span>
+                </div>
+                <p class="mt-2 flex items-center gap-1.5 text-[13px] text-slate-500 truncate">
+                  <i data-lucide="user" class="w-3.5 h-3.5 shrink-0"></i> Lance Sacay
+                </p>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <span class="inline-flex items-center gap-1.5 text-xs text-slate-500">
+                    <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Today
+                  </span>
+                  <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-inset ring-slate-200 tabular">PHP 1,300 Balance</span>
+                </div>
+              </article>
+
+              <!-- BOX: ORD 1042 -->
+              <article x-show="tailorFilter === 'All' || tailorFilter === 'Ana'" @click="currentTab = 'order_details'"
+                class="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 transition hover:border-slate-300 hover:shadow-md cursor-pointer">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-base font-bold tracking-tight text-slate-900 tabular">ORD 1042</p>
+                    <p class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+                      <i data-lucide="shirt" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> <span class="truncate">Uniform</span>
+                    </p>
+                  </div>
+                  <span class="grid place-items-center w-8 h-8 rounded-full text-xs font-semibold ring-1 bg-violet-100 text-violet-800 ring-violet-200">A</span>
+                </div>
+                <p class="mt-2 flex items-center gap-1.5 text-[13px] text-slate-500 truncate">
+                  <i data-lucide="user" class="w-3.5 h-3.5 shrink-0"></i> Maria Santos
+                </p>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <span class="inline-flex items-center gap-1.5 text-xs text-slate-500">
+                    <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Today
+                  </span>
+                  <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-inset ring-slate-200 tabular">PHP 800 Balance</span>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <!-- Column 2: Ready for Pick up -->
+          <section class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col md:min-h-[420px]">
+            <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
+              <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="package-check" class="w-4 h-4"></i></span>
+              <div class="flex-1 min-w-0">
+                <h2 class="text-[15px] font-semibold leading-tight flex items-center gap-2">
+                  Ready for Pick up
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span> Ready for customer
+                </p>
+              </div>
+            </header>
+            
+            <div class="flex-1 p-4 space-y-3 bg-slate-50/60 rounded-b-xl">
+              <!-- BOX: ORD 1041 -->
+              <article x-show="tailorFilter === 'All' || tailorFilter === 'Robert'" @click="currentTab = 'order_details'"
+                class="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 transition hover:border-slate-300 hover:shadow-md cursor-pointer">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-base font-bold tracking-tight text-slate-900 tabular">ORD 1041</p>
+                    <p class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+                      <i data-lucide="shirt" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> <span class="truncate">School Uniform</span>
+                    </p>
+                  </div>
+                  <span class="grid place-items-center w-8 h-8 rounded-full text-xs font-semibold ring-1 bg-sky-100 text-sky-800 ring-sky-200">R</span>
+                </div>
+                <p class="mt-2 flex items-center gap-1.5 text-[13px] text-slate-500 truncate">
+                  <i data-lucide="user" class="w-3.5 h-3.5 shrink-0"></i> Daniel Migz
+                </p>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <span class="inline-flex items-center gap-1.5 text-xs text-slate-500">
+                    <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Today
+                  </span>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                    <i data-lucide="check-circle-2" class="w-3 h-3 stroke-[2.5]"></i> Paid
+                  </span>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <!-- Column 3: Claimed -->
+          <section class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col md:min-h-[420px]">
+            <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
+              <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="circle-check-big" class="w-4 h-4"></i></span>
+              <div class="flex-1 min-w-0">
+                <h2 class="text-[15px] font-semibold leading-tight flex items-center gap-2">
+                  Claimed
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Completed orders
+                </p>
+              </div>
+            </header>
+            
+            <div class="flex-1 p-4 space-y-3 bg-slate-50/60 rounded-b-xl">
+              <!-- BOX: ORD 1040 -->
+              <article x-show="tailorFilter === 'All' || tailorFilter === 'Ana'" @click="currentTab = 'order_details'"
+                class="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 transition hover:border-slate-300 hover:shadow-md cursor-pointer">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-base font-bold tracking-tight text-slate-900 tabular">ORD 1040</p>
+                    <p class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+                      <i data-lucide="shirt" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> <span class="truncate">School Uniform</span>
+                    </p>
+                  </div>
+                  <span class="grid place-items-center w-8 h-8 rounded-full text-xs font-semibold ring-1 bg-violet-100 text-violet-800 ring-violet-200">A</span>
+                </div>
+                <p class="mt-2 flex items-center gap-1.5 text-[13px] text-slate-500 truncate">
+                  <i data-lucide="user" class="w-3.5 h-3.5 shrink-0"></i> Jon Berd
+                </p>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <span class="inline-flex items-center gap-1.5 text-xs text-slate-500">
+                    <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Oct 20
+                  </span>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                    <i data-lucide="check-circle-2" class="w-3 h-3 stroke-[2.5]"></i> Paid
+                  </span>
+                </div>
+              </article>
+
+              <!-- BOX: ORD 1039 -->
+              <article x-show="tailorFilter === 'All' || tailorFilter === 'Unassigned'" @click="currentTab = 'order_details'"
+                class="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 transition hover:border-slate-300 hover:shadow-md cursor-pointer">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-base font-bold tracking-tight text-slate-900 tabular">ORD 1039</p>
+                    <p class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+                      <i data-lucide="shirt" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i> <span class="truncate">PE Uniform × 30</span>
+                    </p>
+                  </div>
+                  <span class="grid place-items-center w-8 h-8 rounded-full border border-dashed border-slate-300 bg-white text-slate-400 text-xs"><i data-lucide="user-x" class="w-3.5 h-3.5"></i></span>
+                </div>
+                <p class="mt-2 flex items-center gap-1.5 text-[13px] text-slate-500 truncate">
+                  <i data-lucide="user" class="w-3.5 h-3.5 shrink-0"></i> MSU IIT
+                </p>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <span class="inline-flex items-center gap-1.5 text-xs text-slate-500">
+                    <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Oct 5
+                  </span>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                    <i data-lucide="check-circle-2" class="w-3 h-3 stroke-[2.5]"></i> Paid
+                  </span>
+                </div>
+              </article>
+            </div>
+          </section>
+
+        </div>
+
+      </div>
+
+  <!-- SCREEN 7: Reports -->
+<div x-show="currentTab === 'reports'" x-cloak
+     x-data="{
+       range: 'This week', hover: null,
+       ranges: ['Today', 'This week', 'Last 30 days'],
+       reports: {
+         'Today': {
+           rangeLabel: 'Oct 28, 2026', unit: 'hour', subtitle: 'Today, Oct 28', max: 4, ticks: [4, 3, 2, 1, 0],
+           kpi: { claimed: 7, cash: 1050, gcash: 700, total: 1750 },
+           series: [
+             { label: '9a', sub: '9:00', count: 1 }, { label: '10a', sub: '10:00', count: 0 }, { label: '11a', sub: '11:00', count: 2 },
+             { label: '12p', sub: '12:00', count: 0 }, { label: '1p', sub: '13:00', count: 1 }, { label: '2p', sub: '14:00', count: 0 },
+             { label: '3p', sub: '15:00', count: 1 }, { label: '4p', sub: '16:00', count: 1 }, { label: '5p', sub: '17:00 · Now', count: 1, current: true }
+           ],
+           garments: [['School Polo', 3], ['School Blouse', 2], ['Slacks', 1], ['Barong', 1], ['Filipiniana', 0], ['Tuxedo', 0]]
+         },
+         'This week': {
+           rangeLabel: 'Oct 22 - Oct 28, 2026', unit: 'day', subtitle: 'This week · Oct 22 – Oct 28', max: 12, ticks: [12, 9, 6, 3, 0],
+           kpi: { claimed: 46, cash: 6250, gcash: 4560, total: 10810 },
+           series: [
+             { label: 'Thu', sub: 'Oct 22', count: 5 }, { label: 'Fri', sub: 'Oct 23', count: 8 }, { label: 'Sat', sub: 'Oct 24', count: 11 },
+             { label: 'Sun', sub: 'Oct 25', count: 2 }, { label: 'Mon', sub: 'Oct 26', count: 6 }, { label: 'Tue', sub: 'Oct 27', count: 7 },
+             { label: 'Wed', sub: 'Today', count: 7, current: true }
+           ],
+           garments: [['School Polo', 15], ['School Blouse', 12], ['Slacks', 8], ['Barong', 6], ['Filipiniana', 3], ['Tuxedo', 2]]
+         },
+         'Last 30 days': {
+           rangeLabel: 'Sep 29 - Oct 28, 2026', unit: 'week', subtitle: 'Last 30 days · Sep 29 – Oct 28', max: 50, ticks: [50, 40, 30, 20, 10, 0],
+           kpi: { claimed: 172, cash: 23400, gcash: 17250, total: 40650 },
+           series: [
+             { label: 'Sep 29–30', sub: '2 days', count: 9 }, { label: 'Oct 1–7', sub: '7 days', count: 36 },
+             { label: 'Oct 8–14', sub: '7 days', count: 42 }, { label: 'Oct 15–21', sub: '7 days', count: 39 },
+             { label: 'Oct 22–28', sub: 'This week', count: 46, current: true }
+           ],
+           garments: [['School Polo', 52], ['School Blouse', 44], ['Slacks', 31], ['Barong', 22], ['Filipiniana', 14], ['Tuxedo', 9]]
+         }
+       },
+       get r() { return this.reports[this.range]; },
+       get gTotal() { return this.r.garments.reduce((s, g) => s + g[1], 0); },
+       get gMax() { return this.r.garments[0][1]; },
+       peso(n) { return '₱' + n.toLocaleString('en-PH'); },
+       setRange(x) { this.range = x; this.hover = null; },
+       exportCsv() {
+         const r = this.r;
+         const rows = [['Report', this.range, r.rangeLabel], [], ['Claimed Orders', r.kpi.claimed], ['Cash Received', r.kpi.cash], ['GCash Received', r.kpi.gcash], ['Total Collected', r.kpi.total], [], ['Claimed per ' + r.unit, 'Count']]
+           .concat(r.series.map(d => [d.label + ' (' + d.sub + ')', d.count]), [[], ['Garment Type', 'Count']], r.garments);
+         const a = document.createElement('a');
+         a.href = URL.createObjectURL(new Blob([rows.map(x => x.join(',')).join('\n')], { type: 'text/csv' }));
+         a.download = 'tahian-report-' + this.range.toLowerCase().replace(/\s+/g, '-') + '.csv';
+         a.click();
+       }
+     }">
+
+  <!-- Page header and controls -->
+  <div class="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+    <div>
+      <p class="text-xs font-medium text-slate-500">Reports <span class="text-slate-300">/</span> <span class="text-slate-700">Overview</span></p>
+      <h1 class="text-2xl font-semibold tracking-tight mt-1">Reports</h1>
+    </div>
+    <div class="flex flex-wrap items-center gap-3">
+      <div role="tablist" class="inline-flex items-center gap-1 p-1 rounded-lg bg-white border border-slate-200 shadow-sm">
+        <template x-for="x in ranges" :key="x">
+          <button type="button" role="tab" @click="setRange(x)"
+                  :class="range === x ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
+                  class="h-8 px-3.5 rounded-md text-sm font-medium transition whitespace-nowrap" x-text="x"></button>
+        </template>
+      </div>
+      <button type="button" @click="exportCsv()" class="h-10 px-4 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold inline-flex items-center gap-2 shadow-sm hover:bg-slate-50 hover:text-slate-900 transition">
+        <i data-lucide="download" class="w-4 h-4"></i> Export
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI row -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+    <div class="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+      <div class="flex items-center justify-between"><p class="text-sm font-medium text-slate-600">Claimed Orders</p>
+        <span class="grid place-items-center w-9 h-9 rounded-lg ring-1 bg-emerald-50 text-emerald-700 ring-emerald-200"><i data-lucide="package-check" class="w-[18px] h-[18px]"></i></span></div>
+      <p class="mt-3 text-[28px] leading-none font-bold tracking-tight tabular" x-text="r.kpi.claimed"></p>
+      <p class="mt-2.5 inline-flex items-center gap-1.5 text-xs text-slate-500"><i data-lucide="calendar-days" class="w-3 h-3"></i> <span x-text="r.rangeLabel"></span></p>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+      <div class="flex items-center justify-between"><p class="text-sm font-medium text-slate-600">Cash Received</p>
+        <span class="grid place-items-center w-9 h-9 rounded-lg ring-1 bg-sky-50 text-sky-700 ring-sky-200"><i data-lucide="banknote" class="w-[18px] h-[18px]"></i></span></div>
+      <p class="mt-3 text-[28px] leading-none font-bold tracking-tight tabular" x-text="peso(r.kpi.cash)"></p>
+      <p class="mt-2.5 inline-flex items-center gap-1.5 text-xs text-slate-500"><i data-lucide="calendar-days" class="w-3 h-3"></i> <span x-text="r.rangeLabel"></span></p>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+      <div class="flex items-center justify-between"><p class="text-sm font-medium text-slate-600">GCash Received</p>
+        <span class="grid place-items-center w-9 h-9 rounded-lg ring-1 bg-violet-50 text-violet-700 ring-violet-200"><i data-lucide="smartphone" class="w-[18px] h-[18px]"></i></span></div>
+      <p class="mt-3 text-[28px] leading-none font-bold tracking-tight tabular" x-text="peso(r.kpi.gcash)"></p>
+      <p class="mt-2.5 inline-flex items-center gap-1.5 text-xs text-slate-500"><i data-lucide="calendar-days" class="w-3 h-3"></i> <span x-text="r.rangeLabel"></span></p>
+    </div>
+    <div class="rounded-xl border border-slate-900 bg-slate-900 text-white shadow-sm p-5">
+      <div class="flex items-center justify-between"><p class="text-sm font-medium text-slate-300">Total Collected</p>
+        <span class="grid place-items-center w-9 h-9 rounded-lg ring-1 bg-white/10 text-white ring-white/20"><i data-lucide="wallet" class="w-[18px] h-[18px]"></i></span></div>
+      <p class="mt-3 text-[28px] leading-none font-bold tracking-tight tabular" x-text="peso(r.kpi.total)"></p>
+      <p class="mt-2.5 inline-flex items-center gap-1.5 text-xs text-slate-400"><i data-lucide="calendar-days" class="w-3 h-3"></i> <span x-text="r.rangeLabel"></span></p>
+    </div>
+  </div>
+
+  <!-- Bottom row -->
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+    <!-- Claimed orders -->
+    <section class="lg:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm">
+      <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
+        <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="trending-up" class="w-[18px] h-[18px]"></i></span>
+        <div>
+          <h2 class="text-[15px] font-semibold leading-tight">Claimed orders per <span x-text="r.unit"></span></h2>
+          <p class="text-xs text-slate-500 mt-0.5" x-text="r.subtitle"></p>
+        </div>
+      </header>
+      <div class="p-5">
+        <div class="pt-8"></div>
+        <div class="flex gap-3">
+
+          <div class="relative h-72 w-5 text-[11px] text-slate-400 tabular text-right">
+            <template x-for="t in r.ticks" :key="t">
+              <span class="absolute right-0 -translate-y-1/2" :style="`top:${100 - (t / r.max) * 100}%`" x-text="t"></span>
+            </template>
+          </div>
+
+          <div class="relative flex-1 h-72">
+            <div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
+              <template x-for="(t, i) in r.ticks" :key="t">
+                <div class="border-t" :class="i === r.ticks.length - 1 ? 'border-slate-300' : 'border-dashed border-slate-200'"></div>
+              </template>
+            </div>
+            <div class="relative h-full flex items-end justify-between gap-2 sm:gap-4 px-1 sm:px-3">
+              <template x-for="(d, i) in r.series" :key="d.label">
+                <div class="relative flex-1 h-full flex items-end justify-center" @mouseenter="hover = i" @mouseleave="hover = null">
+                  <div x-show="hover === i" class="absolute z-10 -translate-y-2 rounded-lg bg-slate-900 px-2.5 py-1.5 text-center text-white shadow-lg whitespace-nowrap" :style="`bottom:${(d.count / r.max) * 100}%`">
+                    <p class="text-xs font-semibold tabular"><span x-text="d.count"></span> claimed</p>
+                    <p class="text-[10px] text-slate-400"><span x-text="d.label"></span> · <span x-text="d.sub"></span></p>
+                  </div>
+                  <div class="w-full max-w-[44px] rounded-t-md transition-all duration-200"
+                       :class="d.current ? 'bg-slate-900' : (hover === i ? 'bg-slate-500' : 'bg-slate-300')"
+                       :style="`height:${d.count ? (d.count / r.max) * 100 + '%' : '2px'}`"
+                       role="img" :aria-label="`${d.label} ${d.sub}: ${d.count} claimed orders`"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-3 mt-2">
+          <div class="w-5"></div>
+          <div class="flex-1 flex justify-between gap-2 sm:gap-4 px-1 sm:px-3">
+            <template x-for="d in r.series" :key="d.label">
+              <div class="flex-1 text-center leading-tight min-w-0">
+                <p class="text-xs font-semibold truncate" :class="d.current ? 'text-slate-900' : 'text-slate-600'" x-text="d.label"></p>
+                <p class="text-[10px] text-slate-400 hidden sm:block truncate" x-text="d.sub"></p>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Garment type ranking -->
+    <section class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
+      <header class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-slate-100">
+        <span class="grid place-items-center w-9 h-9 rounded-lg bg-slate-100 text-slate-700"><i data-lucide="shirt" class="w-[18px] h-[18px]"></i></span>
+        <div class="flex-1">
+          <h2 class="text-[15px] font-semibold leading-tight">Garment Type</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Ranked by claimed orders</p>
+        </div>
+      </header>
+      <ol class="flex-1">
+        <template x-for="(g, i) in r.garments" :key="g[0]">
+          <li class="px-5 py-3.5 border-b border-slate-100 last:border-b-0 hover:bg-slate-50/80 transition">
+            <div class="flex items-center gap-3">
+              <span class="grid place-items-center w-6 h-6 rounded-md text-[11px] font-bold tabular shrink-0" :class="i === 0 ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500'" x-text="i + 1"></span>
+              <span class="flex-1 text-sm font-medium text-slate-800" x-text="g[0]"></span>
+              <span class="text-xs text-slate-400 tabular" x-text="(gTotal ? Math.round((g[1] / gTotal) * 100) : 0) + '%'"></span>
+              <span class="min-w-[36px] text-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-800 tabular ring-1 ring-inset ring-slate-200" x-text="g[1]"></span>
+            </div>
+            <div class="mt-2 ml-9 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+              <div class="h-full rounded-full" :class="i === 0 ? 'bg-slate-900' : 'bg-slate-400'" :style="`width:${(g[1] / gMax) * 100}%`"></div>
+            </div>
+          </li>
+        </template>
+      </ol>
+    </section>
+  </div>
+</div>
+      
     </main>
   </div>
 
