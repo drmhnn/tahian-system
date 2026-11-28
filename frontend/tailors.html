@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TahiAN | Tailor Management</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  // TahiAN design tokens for Tailwind (same inline config as dashboard.html)
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          canvas: '#F7F3EF', sidebar: '#FCFAF7', surface: '#FFFDFA',
+          brand: { DEFAULT: '#733E50', deep: '#542B3A' },
+          onbrand: '#FFFAF3', onbrandmuted: '#EBD8DF',
+          ink: '#34232B', muted: '#807279', line: '#E8DEDA', stitch: '#CBB7B7',
+          blush: '#F1E6E6', rosebg: '#F7E6E8', wine: '#933D50', moss: '#365C46',
+          sage: '#EDF3EC', sand: '#FBF0DF', ochre: '#845927', avatar: '#EEE5DC'
+        },
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          display: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+          logo: ['"Bricolage Grotesque"', 'Inter', 'sans-serif']
+        },
+        boxShadow: { card: '0 2px 12px rgba(54,26,36,.05)' }
+      }
+    }
+  };
+</script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500&family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="styles.css" rel="stylesheet"/>
+<script src="app.js"></script>
+
+<script>
+  /* ------------------------------------------------------------------
+     Tailor Management page logic.
+
+     Shared pieces (storage key, read/save, next ID, Owner-only checks)
+     live in app.js. This object adds only what THIS page needs, and is
+     merged into the shared state:
+     tahianApp('tailors', tailorPage(), { requireLogin: true })
+     so `this.isOwner` below is the same Owner check used by every page.
+
+     Uniqueness rule (our decision, change here if the group decides otherwise):
+       - Full name must be unique (ignoring capital letters and extra spaces)
+       - Contact number, if given, must be unique
+     ------------------------------------------------------------------ */
+  function tailorPage() {
+    return {
+      tailors: [],              // the records currently shown on this page
+      storageNotice: '',        // warning if saved data was unreadable
+      search: '',               // text typed in the search box
+      statusFilter: 'All',      // 'All' | 'Active' | 'Inactive'
+
+      formOpen: false,          // is the Add/Edit modal open?
+      formMode: 'add',          // 'add' or 'edit'
+      editingId: null,          // ID of the tailor being edited
+      form: { name: '', contact: '', status: 'Active' },
+      errors: { name: '', contact: '' },
+
+      tailorToDeactivate: null, // set while the deactivate confirmation is open
+      message: '',              // result of the last real action
+      messageIsError: false,
+
+      // ---------- start-up ----------
+      pageInit() {
+        this.loadTailors();
+        // If another browser tab changes the tailors, refresh this one.
+        window.addEventListener('storage', (event) => {
+          if (event.key === TAHIAN_TAILORS_KEY) this.loadTailors();
+        });
+      },
+
+      loadTailors() {
+        const stored = tahianReadTailorStorage();
+        this.tailors = stored.tailors;
+        this.storageNotice = stored.damaged
+          ? 'Saved tailor data could not be fully read, so demo or partial records are shown. Saving any change will replace the damaged data.'
+          : '';
+      },
+
+      // ---------- search + filter ----------
+      // Keeps a tailor only if it passes BOTH the status filter and the search.
+      get filteredTailors() {
+        const query = this.search.trim().toLowerCase();
+        const queryDigits = query.replace(/[\s-]/g, '');
+
+        return this.tailors.filter((tailor) => {
+          const statusOk =
+            this.statusFilter === 'All' || tailor.status === this.statusFilter;
+
+          const searchOk =
+            query === '' ||
+            tailor.id.toLowerCase().includes(query) ||
+            tailor.name.toLowerCase().includes(query) ||
+            (queryDigits !== '' && tailor.contact.includes(queryDigits));
+
+          return statusOk && searchOk;
+        });
+      },
+
+      get activeCount() {
+        return this.tailors.filter((t) => t.status === 'Active').length;
+      },
+
+      get inactiveCount() {
+        return this.tailors.length - this.activeCount;
+      },
+
+      get hasFilters() {
+        return this.search.trim() !== '' || this.statusFilter !== 'All';
+      },
+
+      clearFilters() {
+        this.search = '';
+        this.statusFilter = 'All';
+      },
+
+      // ---------- small display helpers ----------
+      initials(name) {
+        return name.split(' ').filter(Boolean).slice(0, 2)
+          .map((word) => word[0].toUpperCase()).join('');
+      },
+
+      // 09171234567 -> 0917 123 4567
+      formatContact(digits) {
+        return digits.replace(/^(\d{4})(\d{3})(\d{4})$/, '$1 $2 $3');
+      },
+
+      showMessage(text, isError) {
+        this.message = text;
+        this.messageIsError = Boolean(isError);
+      },
+
+      // ---------- Add / Edit form ----------
+      openAddForm() {
+        if (!this.isOwner) return;
+        this.formMode = 'add';
+        this.editingId = null;
+        this.form = { name: '', contact: '', status: 'Active' };
+        this.openForm();
+      },
+
+      openEditForm(tailor) {
+        if (!this.isOwner) return;
+        this.formMode = 'edit';
+        this.editingId = tailor.id;
+        // Copy the values so typing does not change the table until Save.
+        this.form = {
+          name: tailor.name,
+          contact: this.formatContact(tailor.contact),
+          status: tailor.status
+        };
+        this.openForm();
+      },
+
+      openForm() {
+        this.errors = { name: '', contact: '' };
+        this.message = '';
+        this.formOpen = true;
+        this.$nextTick(() => this.$refs.nameInput.focus());
+      },
+
+      closeForm() {
+        this.formOpen = false;
+        this.errors = { name: '', contact: '' };
+      },
+
+      // Trim and collapse extra spaces: "  Ana   Cruz " -> "Ana Cruz"
+      cleanName(name) {
+        return name.trim().replace(/\s+/g, ' ');
+      },
+
+      // Remove spaces and dashes: "0917 123-4567" -> "09171234567"
+      cleanContact(contact) {
+        return contact.replace(/[\s-]/g, '');
+      },
+
+      // Fills this.errors and returns true only when the form is valid.
+      // `savedTailors` is the freshly read list, used for duplicate checks.
+      validateForm(savedTailors) {
+        const name = this.cleanName(this.form.name);
+        const contact = this.cleanContact(this.form.contact);
+        const errors = { name: '', contact: '' };
+
+        if (name === '') {
+          errors.name = 'Full name is required.';
+        } else if (name.length < 2) {
+          errors.name = 'Full name must be at least 2 characters.';
+        } else if (name.length > 60) {
+          errors.name = 'Full name must be 60 characters or fewer.';
+        } else if (savedTailors.some((t) =>
+          t.id !== this.editingId && t.name.toLowerCase() === name.toLowerCase())) {
+          errors.name = 'A tailor with this name already exists.';
+        }
+
+        // Contact is optional, but if typed it must be 09 + 9 more digits.
+        if (contact !== '') {
+          if (!/^09\d{9}$/.test(contact)) {
+            errors.contact = 'Enter an 11-digit mobile number starting with 09, e.g. 09171234567.';
+          } else if (savedTailors.some((t) =>
+            t.id !== this.editingId && t.contact === contact)) {
+            errors.contact = 'This contact number already belongs to another tailor.';
+          }
+        }
+
+        this.errors = errors;
+        return errors.name === '' && errors.contact === '';
+      },
+
+      saveForm() {
+        // Frontend-only check. The backend must enforce this later.
+        if (!this.isOwner) return;
+
+        // Read the latest saved list so we never overwrite newer changes
+        // made in another tab, and so new IDs are always unused.
+        const savedTailors = tahianGetTailors();
+
+        if (!this.validateForm(savedTailors)) {
+          this.$nextTick(() => {
+            const firstBadField = this.errors.name
+              ? this.$refs.nameInput : this.$refs.contactInput;
+            firstBadField.focus();
+          });
+          return;
+        }
+
+        const name = this.cleanName(this.form.name);
+        const contact = this.cleanContact(this.form.contact);
+        const status = this.form.status === 'Inactive' ? 'Inactive' : 'Active';
+        let resultText;
+
+        if (this.formMode === 'add') {
+          const newTailor = {
+            id: tahianNextTailorId(savedTailors),
+            name: name,
+            contact: contact,
+            status: status
+          };
+          savedTailors.push(newTailor);
+          resultText = name + ' was added as ' + newTailor.id + '.';
+        } else {
+          const tailor = savedTailors.find((t) => t.id === this.editingId);
+          if (!tailor) {
+            this.closeForm();
+            this.showMessage('That tailor no longer exists. The list was refreshed.', true);
+            this.loadTailors();
+            return;
+          }
+          // The ID is never changed, only the details.
+          tailor.name = name;
+          tailor.contact = contact;
+          tailor.status = status;
+          resultText = name + ' was updated.';
+        }
+
+        if (!tahianSaveTailors(savedTailors)) {
+          this.showMessage('Could not save: the browser blocked or filled its storage.', true);
+          return;
+        }
+
+        this.tailors = savedTailors; // table updates immediately
+        this.closeForm();
+        this.showMessage(resultText, false);
+      },
+
+      // ---------- Activate / Deactivate ----------
+      // Deactivating asks for confirmation first; activating does not.
+      askToDeactivate(tailor) {
+        if (!this.isOwner) return;
+        this.message = '';
+        this.tailorToDeactivate = tailor;
+      },
+
+      cancelDeactivate() {
+        this.tailorToDeactivate = null;
+      },
+
+      confirmDeactivate() {
+        if (this.tailorToDeactivate) {
+          this.changeStatus(this.tailorToDeactivate.id, 'Inactive');
+        }
+        this.tailorToDeactivate = null;
+      },
+
+      activate(tailor) {
+        this.changeStatus(tailor.id, 'Active');
+      },
+
+      // Only the status changes. The record is kept, so old orders that
+      // point to this tailor ID are untouched.
+      changeStatus(tailorId, newStatus) {
+        if (!this.isOwner) return;
+
+        const savedTailors = tahianGetTailors();
+        const tailor = savedTailors.find((t) => t.id === tailorId);
+
+        if (!tailor) {
+          this.showMessage('That tailor no longer exists. The list was refreshed.', true);
+          this.loadTailors();
+          return;
+        }
+
+        tailor.status = newStatus;
+
+        if (!tahianSaveTailors(savedTailors)) {
+          this.showMessage('Could not save: the browser blocked or filled its storage.', true);
+          return;
+        }
+
+        this.tailors = savedTailors;
+        this.showMessage(
+          tailor.name + (newStatus === 'Active' ? ' is now Active.' : ' is now Inactive.'),
+          false
+        );
+      }
+    };
+  }
+</script>
+</head>
+<body class="flex h-[100dvh] overflow-hidden bg-canvas font-sans text-sm text-ink antialiased sm:text-[15px]" x-data="tahianApp('tailors', tailorPage(), { requireLogin: true })">
+
+<!-- APP SHELL: sidebar (drawer below lg) + workspace -->
+<div class="flex min-w-0 flex-1 print:hidden" x-cloak x-show="loggedIn" x-data="{ menu: false }" @keydown.escape.window="menu = false">
+
+  <!-- SIDEBAR: one shared definition in app.js (TAHIAN_NAV_ITEMS) -->
+  <tahian-sidebar></tahian-sidebar>
+
+  <!-- MAIN WORKSPACE -->
+  <div class="flex min-w-0 flex-1 flex-col overflow-y-auto">
+    <header class="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 border-b border-line bg-sidebar px-4 sm:gap-3 sm:px-6 lg:h-[88px] lg:px-8">
+      <button type="button" @click="menu = true" class="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-line bg-surface text-brand transition hover:bg-blush lg:hidden" aria-label="Open menu" aria-controls="sidebar" :aria-expanded="menu">
+        <i class="h-5 w-5" data-lucide="menu"></i>
+      </button>
+      <label class="relative min-w-0 max-w-md flex-1">
+        <i class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" data-lucide="search"></i>
+        <input class="h-10 w-full rounded-lg border border-line bg-canvas pl-9 pr-3 text-sm text-ink placeholder:text-ink/70 focus:outline-none focus:ring-2 focus:ring-brand/40" type="text" placeholder="Client, order, or Fabric ID" aria-label="Search clients, orders, or fabric IDs"/>
+      </label>
+      <div class="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+        <div class="hidden text-sm leading-tight sm:block"><div class="font-semibold" x-text="userName || 'Guest'">Guest</div><div class="text-xs" x-text="userRole || 'Not signed in'">Not signed in</div></div>
+        <div class="grid h-9 w-9 place-items-center rounded-full bg-blush text-brand"><i class="h-4 w-4" data-lucide="user"></i></div>
+        <button type="button" @click="logout()" aria-label="Log out" class="inline-flex h-10 items-center gap-2 rounded-lg border border-line bg-surface px-2.5 text-sm font-medium text-brand shadow-sm transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40 sm:px-3.5">
+          <i class="h-4 w-4" data-lucide="log-out"></i><span class="hidden sm:inline">Log out</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="mx-auto w-full max-w-[1500px] px-4 pb-8 pt-5 sm:px-6 lg:px-8 lg:pt-6"
+          @keydown.escape.window="closeForm(); cancelDeactivate()">
+
+      <!-- SCREEN: Tailor Management (hidden unless the signed-in user is the Owner) -->
+      <div x-cloak x-show="loggedIn && canAccess('tailors')" class="space-y-4 lg:space-y-5">
+
+        <!-- Page header -->
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p class="text-xs font-medium sm:text-sm">Management / Tailors</p>
+            <h1 class="mt-0.5 font-display text-3xl font-semibold leading-tight text-brand-deep sm:text-4xl">Tailor Management</h1>
+            <div class="mt-1.5 h-0.5 w-40 bg-[repeating-linear-gradient(90deg,#D4B0BC_0_6px,transparent_6px_10px)]"></div>
+          </div>
+          <button type="button" @click="openAddForm()" class="inline-flex h-10 items-center justify-center gap-2 self-start rounded-lg bg-brand px-4 text-sm font-semibold text-onbrand shadow-sm transition hover:bg-brand-deep focus-visible:ring-2 focus-visible:ring-brand/40 sm:self-auto">
+            <i class="h-4 w-4" data-lucide="user-plus"></i> Add Tailor
+          </button>
+        </div>
+
+        <!-- Damaged-storage warning (only shown when needed) -->
+        <p x-show="storageNotice" x-text="storageNotice" role="alert" class="rounded-lg bg-sand px-4 py-3 text-[13px] font-medium text-ochre sm:text-sm"></p>
+
+        <!-- Result of the last real action -->
+        <p x-show="message" x-text="message" role="status" aria-live="polite"
+           class="rounded-lg px-4 py-3 text-[13px] font-medium sm:text-sm"
+           :class="messageIsError ? 'bg-rosebg text-wine' : 'bg-sage text-moss'"></p>
+
+        <!-- Directory card -->
+        <section class="min-w-0 overflow-hidden rounded-xl border border-line bg-surface shadow-card" aria-label="Tailor directory">
+
+          <!-- Search + status filter -->
+          <div class="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center sm:px-5">
+            <label class="relative min-w-0 flex-1">
+              <span class="sr-only">Search tailors by name, contact number, or Tailor ID</span>
+              <i class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" data-lucide="search"></i>
+              <input type="search" x-model="search" placeholder="Search by name, contact number, or Tailor ID..."
+                     class="h-11 w-full rounded-lg border border-line bg-surface pl-10 pr-3.5 text-sm placeholder:text-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"/>
+            </label>
+            <div class="inline-flex shrink-0 gap-1 rounded-lg bg-canvas p-1" role="group" aria-label="Filter by status">
+              <template x-for="option in ['All', 'Active', 'Inactive']" :key="option">
+                <button type="button" @click="statusFilter = option" x-text="option"
+                        :aria-pressed="statusFilter === option"
+                        class="h-9 flex-1 rounded-md px-3.5 text-sm font-medium transition focus-visible:ring-2 focus-visible:ring-brand/40 sm:flex-none"
+                        :class="statusFilter === option ? 'bg-surface text-brand-deep shadow-sm ring-1 ring-line' : 'text-muted hover:text-ink'"></button>
+              </template>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="overflow-x-auto" x-show="filteredTailors.length > 0">
+            <table class="w-full border-collapse text-sm">
+              <thead>
+                <tr class="h-10 bg-canvas text-left text-[13px] font-semibold text-brand">
+                  <th scope="col" class="whitespace-nowrap px-4 font-semibold sm:pl-5">Full Name</th>
+                  <th scope="col" class="hidden whitespace-nowrap px-3 font-semibold sm:table-cell">Tailor ID</th>
+                  <th scope="col" class="hidden whitespace-nowrap px-3 font-semibold md:table-cell">Contact Number</th>
+                  <th scope="col" class="whitespace-nowrap px-3 font-semibold">Status</th>
+                  <th scope="col" class="whitespace-nowrap px-4 text-right font-semibold sm:pr-5">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-line">
+                <template x-for="tailor in filteredTailors" :key="tailor.id">
+                  <tr class="transition hover:bg-blush/40" :class="tailor.status === 'Inactive' ? 'text-muted' : ''">
+                    <td class="px-4 py-3 sm:pl-5">
+                      <div class="flex items-center gap-3">
+                        <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-avatar text-xs font-semibold text-brand" x-text="initials(tailor.name)" aria-hidden="true"></span>
+                        <div class="min-w-0">
+                          <div class="truncate font-semibold" :class="tailor.status === 'Inactive' ? '' : 'text-ink'" x-text="tailor.name"></div>
+                          <!-- ID and contact move under the name on small screens -->
+                          <div class="text-xs md:hidden">
+                            <span class="tabular-nums sm:hidden" x-text="tailor.id"></span>
+                            <span class="sm:hidden" x-show="tailor.contact"> · </span>
+                            <span class="tabular-nums" x-show="tailor.contact" x-text="formatContact(tailor.contact)"></span>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="hidden whitespace-nowrap px-3 tabular-nums sm:table-cell" x-text="tailor.id"></td>
+                    <td class="hidden whitespace-nowrap px-3 tabular-nums md:table-cell">
+                      <span x-show="tailor.contact" x-text="formatContact(tailor.contact)"></span>
+                      <span x-show="!tailor.contact" class="text-muted">Not provided</span>
+                    </td>
+                    <td class="px-3">
+                      <span class="inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full pl-2.5 pr-3 text-xs font-medium sm:text-[13px]"
+                            :class="tailor.status === 'Active' ? 'bg-sage text-moss' : 'bg-blush text-muted'">
+                        <span class="h-1.5 w-1.5 rounded-full" :class="tailor.status === 'Active' ? 'bg-moss' : 'bg-muted'"></span>
+                        <span x-text="tailor.status"></span>
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 sm:pr-5">
+                      <div class="flex items-center justify-end gap-2">
+                        <button type="button" @click="openEditForm(tailor)" :aria-label="'Edit ' + tailor.name"
+                                class="h-9 whitespace-nowrap rounded-lg border border-line bg-surface px-3 text-[13px] font-medium text-brand transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40">Edit</button>
+                        <button type="button" x-show="tailor.status === 'Active'" @click="askToDeactivate(tailor)" :aria-label="'Deactivate ' + tailor.name"
+                                class="h-9 whitespace-nowrap rounded-lg border border-line bg-surface px-3 text-[13px] font-medium text-wine transition hover:bg-rosebg focus-visible:ring-2 focus-visible:ring-brand/40">Deactivate</button>
+                        <button type="button" x-show="tailor.status === 'Inactive'" @click="activate(tailor)" :aria-label="'Activate ' + tailor.name"
+                                class="h-9 whitespace-nowrap rounded-lg border border-line bg-surface px-3 text-[13px] font-medium text-moss transition hover:bg-sage focus-visible:ring-2 focus-visible:ring-brand/40">Activate</button>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty state (no record matches the search/filter) -->
+          <div x-show="filteredTailors.length === 0" class="flex flex-col items-center gap-2 px-4 py-12 text-center">
+            <span class="grid h-12 w-12 place-items-center rounded-full bg-blush text-brand"><i class="h-5 w-5" data-lucide="users-round"></i></span>
+            <h2 class="font-display text-2xl font-semibold text-brand-deep">No tailors found</h2>
+            <p class="max-w-sm text-[13px] sm:text-sm" x-show="hasFilters">No tailor matches your search or filter. Check the spelling or try a different filter.</p>
+            <p class="max-w-sm text-[13px] sm:text-sm" x-show="!hasFilters">There are no tailor records yet. Use Add Tailor to create the first one.</p>
+            <button type="button" x-show="hasFilters" @click="clearFilters()"
+                    class="mt-2 h-10 rounded-lg border border-line bg-surface px-4 text-sm font-medium text-brand transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40">Clear search and filter</button>
+          </div>
+
+          <!-- Footer: total displayed -->
+          <div class="flex flex-col gap-1 border-t border-line px-4 py-3 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-5">
+            <p>Showing <b class="font-semibold text-ink" x-text="filteredTailors.length"></b> of <span x-text="tailors.length"></span> tailors
+              · <span x-text="activeCount"></span> active, <span x-text="inactiveCount"></span> inactive</p>
+            <p>Tailors are never deleted. Deactivate them instead.</p>
+          </div>
+        </section>
+      </div>
+
+      <!-- Add / Edit Tailor Modal (clicking the dark backdrop or pressing Esc closes it) -->
+      <div class="fixed inset-0 z-50 flex items-end justify-center bg-ink/50 p-0 backdrop-blur-sm sm:items-center sm:p-4" x-cloak x-show="formOpen" @click.self="closeForm()">
+        <div class="max-h-full w-full max-w-md space-y-4 overflow-y-auto rounded-t-2xl border border-line bg-surface p-5 shadow-xl sm:rounded-2xl sm:p-6" role="dialog" aria-modal="true" aria-labelledby="tailor-form-title">
+          <div class="flex items-center justify-between border-b border-line pb-3">
+            <h3 id="tailor-form-title" class="font-display text-2xl font-semibold leading-8 text-brand-deep" x-text="formMode === 'add' ? 'Add Tailor' : 'Edit Tailor'"></h3>
+            <button type="button" @click="closeForm()" class="text-muted hover:text-ink" aria-label="Close"><i class="h-5 w-5" data-lucide="x"></i></button>
+          </div>
+          <form @submit.prevent="saveForm()" novalidate class="space-y-4">
+            <p class="text-xs" x-show="formMode === 'edit'">Tailor ID: <b class="font-semibold text-ink" x-text="editingId"></b> (cannot be changed)</p>
+            <div>
+              <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-brand-deep" for="tailor-name">Full Name <span class="text-wine">*</span></label>
+              <input id="tailor-name" x-ref="nameInput" x-model="form.name" type="text" autocomplete="off" maxlength="80" placeholder="e.g. Juan dela Cruz"
+                     :aria-invalid="errors.name ? 'true' : 'false'" aria-describedby="tailor-name-error"
+                     class="h-11 w-full rounded-lg border bg-surface px-3.5 text-sm focus:outline-none focus:ring-2"
+                     :class="errors.name ? 'border-wine focus:border-wine focus:ring-wine/30' : 'border-line focus:border-brand focus:ring-brand/30'"/>
+              <p id="tailor-name-error" class="mt-1 text-xs text-wine" x-show="errors.name" x-text="errors.name" role="alert"></p>
+            </div>
+            <div>
+              <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-brand-deep" for="tailor-contact">Contact Number <span class="font-normal normal-case tracking-normal text-muted">(optional)</span></label>
+              <input id="tailor-contact" x-ref="contactInput" x-model="form.contact" type="tel" inputmode="numeric" autocomplete="off" maxlength="16" placeholder="09XX XXX XXXX"
+                     :aria-invalid="errors.contact ? 'true' : 'false'" aria-describedby="tailor-contact-error"
+                     class="h-11 w-full rounded-lg border bg-surface px-3.5 text-sm focus:outline-none focus:ring-2"
+                     :class="errors.contact ? 'border-wine focus:border-wine focus:ring-wine/30' : 'border-line focus:border-brand focus:ring-brand/30'"/>
+              <p id="tailor-contact-error" class="mt-1 text-xs text-wine" x-show="errors.contact" x-text="errors.contact" role="alert"></p>
+            </div>
+            <div>
+              <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-brand-deep" for="tailor-status">Status</label>
+              <select id="tailor-status" x-model="form.status" class="h-11 w-full rounded-lg border border-line bg-surface px-3 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30">
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+              <p class="mt-1 text-xs">Inactive tailors are not offered for new orders. Their existing orders keep them.</p>
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-1">
+              <button type="button" @click="closeForm()" class="h-10 rounded-lg border border-line px-4 text-sm font-medium text-brand transition hover:bg-blush">Cancel</button>
+              <button type="submit" class="h-10 rounded-lg bg-brand px-4 text-sm font-semibold text-onbrand transition hover:bg-brand-deep" x-text="formMode === 'add' ? 'Save Tailor' : 'Save Changes'"></button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Deactivate confirmation -->
+      <div class="fixed inset-0 z-50 flex items-end justify-center bg-ink/50 p-0 backdrop-blur-sm sm:items-center sm:p-4" x-cloak x-show="tailorToDeactivate" @click.self="cancelDeactivate()">
+        <div class="max-h-full w-full max-w-md space-y-4 overflow-y-auto rounded-t-2xl border border-line bg-surface p-5 shadow-xl sm:rounded-2xl sm:p-6" role="alertdialog" aria-modal="true" aria-labelledby="deactivate-title" aria-describedby="deactivate-text">
+          <h3 id="deactivate-title" class="border-b border-line pb-3 font-display text-2xl font-semibold leading-8 text-brand-deep">
+            Deactivate <span x-text="tailorToDeactivate ? tailorToDeactivate.name : ''"></span>?
+          </h3>
+          <div id="deactivate-text" class="space-y-3 text-[13px] sm:text-sm">
+            <p>This tailor will no longer be offered when assigning new orders. The record is kept, nothing is deleted, and their existing orders stay assigned to them. You can reactivate them at any time.</p>
+            <p class="rounded-lg bg-sand px-3 py-2 font-medium text-ochre">The system cannot yet check whether this tailor still has active orders, because order data is not connected to this page. Check the Orders page before deactivating.</p>
+          </div>
+          <div class="flex items-center justify-end gap-2 pt-1">
+            <button type="button" @click="cancelDeactivate()" class="h-10 rounded-lg border border-line px-4 text-sm font-medium text-brand transition hover:bg-blush">Cancel</button>
+            <button type="button" @click="confirmDeactivate()" class="h-10 rounded-lg bg-wine px-4 text-sm font-semibold text-onbrand transition hover:brightness-95">Deactivate</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  lucide.createIcons();
+  document.addEventListener('alpine:initialized', () => {
+    Alpine.effect(() => { lucide.createIcons(); });
+  });
+</script>
+</body>
+</html>

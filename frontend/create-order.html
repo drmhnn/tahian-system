@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>TahiAN | Create Order</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // TahiAN design tokens for Tailwind (inline config, no extra files)
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              canvas: '#F7F3EF', sidebar: '#FCFAF7', surface: '#FFFDFA',
+              brand: { DEFAULT: '#733E50', deep: '#542B3A' },
+              onbrand: '#FFFAF3', onbrandmuted: '#EBD8DF',
+              ink: '#34232B', muted: '#807279', line: '#E8DEDA', stitch: '#CBB7B7',
+              blush: '#F1E6E6', rosebg: '#F7E6E8', wine: '#933D50', moss: '#365C46',
+              sage: '#EDF3EC', sand: '#FBF0DF', ochre: '#845927', avatar: '#EEE5DC'
+            },
+            fontFamily: {
+              sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+              display: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+              logo: ['"Bricolage Grotesque"', 'Inter', 'sans-serif']
+            },
+            boxShadow: { card: '0 2px 12px rgba(54,26,36,.05)' }
+          }
+        }
+      };
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500&family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="styles.css" rel="stylesheet"/>
+    <script src="app.js"></script>
+  </head>
+  <!-- Form data and behaviour live in createOrderPage() (script at the bottom of this file).
+       Orders are saved with tahianAddOrder() from app.js, the same shared records used by
+       Orders, Order Details and Production Kanban. -->
+  <body class="flex h-[100dvh] overflow-hidden bg-canvas font-sans text-sm text-ink antialiased sm:text-[15px]" x-data="tahianApp('create_order', null, { requireLogin: true })">
+    <!-- APP SHELL: sidebar (drawer below lg) + workspace -->
+    <div class="flex min-w-0 flex-1 print:hidden" x-cloak x-show="loggedIn" x-data="{ menu: false }" @keydown.escape.window="menu = false">
+      <!-- SIDEBAR: one shared definition in app.js (TAHIAN_NAV_ITEMS) -->
+      <tahian-sidebar></tahian-sidebar>
+
+      <!-- MAIN WORKSPACE -->
+      <div class="flex min-w-0 flex-1 flex-col overflow-y-auto">
+        <header class="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 border-b border-line bg-sidebar px-4 sm:gap-3 sm:px-6 lg:h-[88px] lg:px-8">
+          <button type="button" @click="menu = true" class="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-line bg-surface text-brand transition hover:bg-blush lg:hidden" aria-label="Open menu" aria-controls="sidebar" :aria-expanded="menu">
+            <i class="h-5 w-5" data-lucide="menu"></i>
+          </button>
+          <label class="relative min-w-0 max-w-md flex-1">
+            <i class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" data-lucide="search"></i>
+            <input class="h-10 w-full rounded-lg border border-line bg-canvas pl-9 pr-3 text-sm text-ink placeholder:text-ink/70 focus:outline-none focus:ring-2 focus:ring-brand/40" type="text" placeholder="Client, order, or Fabric ID" aria-label="Search clients, orders, or fabric IDs"/>
+          </label>
+          <div class="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+            <div class="hidden text-sm leading-tight sm:block"><div class="font-semibold" x-text="userName || 'Guest'">Guest</div><div class="text-xs" x-text="userRole || 'Not signed in'">Not signed in</div></div>
+            <div class="grid h-9 w-9 place-items-center rounded-full bg-blush text-brand"><i class="h-4 w-4" data-lucide="user"></i></div>
+            <button type="button" @click="logout()" aria-label="Log out" class="inline-flex h-10 items-center gap-2 rounded-lg border border-line bg-surface px-2.5 text-sm font-medium text-brand shadow-sm transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40 sm:px-3.5">
+              <i class="h-4 w-4" data-lucide="log-out"></i><span class="hidden sm:inline">Log out</span>
+            </button>
+          </div>
+        </header>
+
+        <main class="mx-auto w-full max-w-[1500px] px-4 pb-10 pt-5 sm:px-6 lg:px-8 lg:pt-6">
+          <!-- SCREEN: Create Order
+               x-effect redraws Lucide icons whenever the visible content changes. -->
+          <div class="mx-auto w-full max-w-[1180px]" x-cloak x-data="createOrderPage()" x-show="currentTab === 'create_order'"
+               @pageshow.window="onPageShow($event)" @storage.window="refreshShared()" @keydown.escape.window="closeTopLayer()"
+               @tahian-customer-added.window="onCustomerAdded($event.detail.customer)"
+               x-effect="customerKey; customerOpen; customerSearch; confirmOpen; discardOpen; submitted; toastMessage; garment; recordId; preselectMessage; $nextTick(() => window.lucide && lucide.createIcons())">
+            <!-- Page header -->
+            <div class="mb-5 lg:mb-6">
+              <button type="button" @click="leave()" class="mb-3 inline-flex min-h-10 items-center gap-2 rounded-lg px-1 text-sm font-semibold text-brand transition hover:text-brand-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40" aria-label="Back to Orders">
+                <i data-lucide="arrow-left" class="h-4 w-4"></i> Back to Orders
+              </button>
+              <p class="flex items-center gap-1.5 text-xs font-medium sm:text-sm">
+                <a @click.prevent="leave()" class="text-brand hover:text-brand-deep hover:underline" href="#">Orders</a>
+                <span aria-hidden="true" class="text-stitch">/</span>
+                <span aria-current="page">New order</span>
+              </p>
+              <h1 class="mt-0.5 font-display text-3xl font-semibold leading-tight text-brand-deep sm:text-4xl">Create New Order</h1>
+              <div class="mt-1.5 h-0.5 w-40 bg-[repeating-linear-gradient(90deg,#D4B0BC_0_6px,transparent_6px_10px)]"></div>
+              <p class="mt-2 text-xs text-muted sm:text-[13px]"><span class="font-semibold text-wine">*</span> Required field. Order date: <span class="font-medium text-ink" x-text="fmtDate(refDate)"></span> (demo reference date).</p>
+            </div>
+
+            <form @submit.prevent="submitOrder()" autocomplete="off" novalidate class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-5 xl:grid-cols-[minmax(0,1fr)_350px]">
+              <!-- LEFT: order details -->
+              <div class="min-w-0 space-y-4 lg:space-y-5">
+                <!-- 1. Customer Information -->
+                <section aria-labelledby="co-customer-title" class="rounded-xl border border-line bg-surface shadow-card">
+                  <header class="flex items-center gap-3 border-b border-line bg-blush/35 px-4 py-3 sm:px-5">
+                    <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-blush text-brand"><i class="h-[17px] w-[17px]" data-lucide="user"></i></span>
+                    <div class="min-w-0">
+                      <h2 id="co-customer-title" class="text-base font-semibold leading-6 text-brand-deep">Customer Information</h2>
+                      <p class="text-[13px]">Who is this order for?</p>
+                    </div>
+                  </header>
+                  <div class="p-4 sm:p-5">
+                    <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-brand-deep" for="co-customer-btn">Customer <span class="text-wine">*</span></label>
+                    <div @click.outside="customerOpen = false" class="relative">
+                      <button type="button" id="co-customer-btn" @click="toggleCustomers()" aria-haspopup="listbox" :aria-expanded="customerOpen"
+                              :aria-invalid="showError('customer') ? 'true' : 'false'"
+                              :class="showError('customer') ? 'border-wine focus:border-wine focus:ring-wine/20' : 'border-line hover:border-stitch focus:border-brand focus:ring-brand/30'"
+                              class="flex h-12 w-full items-center gap-3 rounded-lg border bg-surface px-3 text-left text-sm transition focus:outline-none focus:ring-2">
+                        <span :class="selected ? selected.color : 'bg-blush text-brand'" class="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[11px] font-semibold" x-text="selected ? selected.initials : '?'"></span>
+                        <span class="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
+                          <span :class="selected ? 'text-ink' : 'text-muted'" class="truncate font-medium" x-text="selected ? selected.name : 'Select a customer'"></span>
+                          <span class="tabular-nums text-muted" x-show="selected &amp;&amp; selected.phoneText" x-text="selected ? selected.phoneText : ''"></span>
+                        </span>
+                        <span :class="customerOpen ? 'rotate-180' : ''" class="shrink-0 text-muted transition-transform"><i class="h-4 w-4" data-lucide="chevron-down"></i></span>
+                      </button>
+                      <!-- Search dropdown -->
+                      <div class="absolute z-20 mt-2 w-full overflow-hidden rounded-lg border border-line bg-surface shadow-xl" style="display:none" x-show="customerOpen" x-transition>
+                        <div class="relative border-b border-line p-2">
+                          <i class="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" data-lucide="search"></i>
+                          <input type="text" x-model="customerSearch" x-ref="customerSearchInput" aria-label="Search customers" placeholder="Search name, mobile number or ID"
+                                 class="h-10 w-full rounded-md border border-line bg-canvas pl-9 pr-3 text-sm placeholder:text-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"/>
+                        </div>
+                        <ul aria-label="Customers" class="max-h-56 overflow-auto py-1" role="listbox">
+                          <template x-for="c in filteredCustomers()" :key="c.key">
+                            <li role="option" :aria-selected="customerKey === c.key">
+                              <button type="button" @click="pickCustomer(c.key)" :class="customerKey === c.key ? 'bg-blush/40' : ''" class="flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition hover:bg-blush/60">
+                                <span :class="c.color" class="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[11px] font-semibold" x-text="c.initials"></span>
+                                <span class="min-w-0 flex-1 truncate">
+                                  <span class="font-medium" x-text="c.name"></span>
+                                  <span class="ml-1 tabular-nums text-muted" x-text="c.phoneText || 'No mobile on record'"></span>
+                                </span>
+                                <span class="shrink-0 rounded-full bg-sand px-2 py-0.5 text-[11px] font-semibold text-ochre" x-show="c.type === 'Bulk'">Bulk</span>
+                                <span class="shrink-0 text-brand" x-show="customerKey === c.key"><i class="h-4 w-4" data-lucide="check"></i></span>
+                              </button>
+                            </li>
+                          </template>
+                          <li class="px-3 py-3 text-sm text-muted" x-show="filteredCustomers().length === 0">No matching customer. Use “Add a new customer” below.</li>
+                        </ul>
+                      </div>
+                    </div>
+                    <p class="mt-1.5 text-sm font-medium text-wine" role="alert" x-show="showError('customer')" x-text="showError('customer')"></p>
+                    <p class="mt-2 rounded-lg bg-sand px-3 py-2 text-sm text-ochre" role="alert" x-show="preselectMessage" x-text="preselectMessage"></p>
+                    <p class="mt-2.5 text-sm">
+                      Not listed?
+                      <a @click.prevent="openNewCustomer()" class="ml-1 inline-flex items-center gap-1 font-semibold text-brand hover:text-brand-deep hover:underline" href="#"><i class="h-[14px] w-[14px]" data-lucide="user-plus"></i> Add a new customer</a>
+                    </p>
+                  </div>
+                </section>
+
+                <!-- 2. Garment Details -->
+                <section aria-labelledby="co-garment-title" class="rounded-xl border border-line bg-surface shadow-card">
+                  <header class="flex items-center gap-3 border-b border-line bg-blush/35 px-4 py-3 sm:px-5">
+                    <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-blush text-brand"><i class="h-[17px] w-[17px]" data-lucide="shirt"></i></span>
+                    <div class="min-w-0">
+                      <h2 id="co-garment-title" class="text-base font-semibold leading-6 text-brand-deep">Garment Details</h2>
+                      <p class="text-[13px]">What are we making, and who will sew it?</p>
+                    </div>
+                  </header>
+                  <div class="space-y-4 p-4 sm:p-5">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div>
+                        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-brand-deep" for="co-garment">Garment Type <span class="text-wine">*</span></label>
+                        <div class="relative">
+                          <i class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" data-lucide="shirt"></i>
+                          <select id="co-garment" x-model="garment" class="h-11 w-full cursor-pointer appearance-none rounded-lg border border-line bg-surface pl-9 pr-9 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30">
+                            <template x-for="g in garments" :key="g.name">
+                              <option :value="g.name" x-text="g.name"></option>
+                            </template>
+                          </select>
+                          <i class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" data-lucide="chevron-down"></i>
+                        </div>
+                      </div>
+                      <div>
+                        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-brand-deep" for="co-tailor">Assigned Tailor <span class="text-wine">*</span></label>
+                        <div class="relative">
+                          <i class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" data-lucide="scissors"></i>
+                          <select id="co-tailor" x-model="tailorChoice" :aria-invalid="showError('tailor') ? 'true' : 'false'"
+                                  :class="showError('tailor') ? 'border-wine focus:border-wine focus:ring-wine/20' : 'border-line focus:border-brand focus:ring-brand/30'"
+                                  class="h-11 w-full cursor-pointer appearance-none rounded-lg border bg-surface pl-9 pr-9 text-sm focus:outline-none focus:ring-2">
+                            <option value="">Select a tailor…</option>
+                            <template x-for="t in tailors" :key="t.id">
+                              <option :value="t.id" x-text="t.name"></option>
+                            </template>
+                            <option value="none">Leave unassigned</option>
+                          </select>
+                          <i class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" data-lucide="chevron-down"></i>
+                        </div>
+                        <p class="mt-1.5 text-xs font-medium text-wine" role="alert" x-show="showError('tailor')" x-text="showError('tailor')"></p>
+                        <p class="mt-1 text-xs text-muted" x-show="!showError('tailor') &amp;&amp; tailors.length === 0">No active tailors. The Owner can add or reactivate one in Manage Tailors.</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-brand-deep" for="co-due">Promised Pickup Date <span class="text-wine">*</span></label>
+                      <input id="co-due" type="date" x-model="dueDate" :min="refDate" :max="maxDue" @click="openDatePicker($event.target)"
+                             :aria-invalid="showError('due') ? 'true' : 'false'"
+                             :class="showError('due') ? 'border-wine focus:border-wine focus:ring-wine/20' : 'border-line focus:border-brand focus:ring-brand/30'"
+                             class="h-11 w-full cursor-pointer rounded-lg border bg-surface px-3 text-sm text-ink focus:outline-none focus:ring-2 sm:max-w-xs"/>
+                      <div class="mt-2 flex flex-wrap items-center gap-2">
+                        <span class="text-xs text-muted">Quick pick:</span>
+                        <template x-for="q in quickDues" :key="q.days">
+                          <button type="button" @click="setDue(q.days)" :class="dueDate === dueIn(q.days) ? 'border-brand bg-blush text-brand-deep' : 'border-line bg-surface text-brand hover:bg-blush'"
+                                  class="h-8 rounded-lg border px-3 text-xs font-semibold transition focus-visible:ring-2 focus-visible:ring-brand/40" x-text="q.label"></button>
+                        </template>
+                      </div>
+                      <p class="mt-1.5 text-xs font-medium text-wine" role="alert" x-show="showError('due')" x-text="showError('due')"></p>
+                    </div>
+
+                    <div>
+                      <label class="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-brand-deep" for="co-notes">
+                        <i class="h-3.5 w-3.5 text-muted" data-lucide="notebook-pen"></i> Design Notes <span class="font-normal normal-case tracking-normal text-muted">(optional)</span>
+                      </label>
+                      <textarea id="co-notes" x-model="notes" rows="3" maxlength="500" placeholder="Fit, fabric, embroidery or other instructions for the tailor"
+                                class="w-full resize-y rounded-lg border border-line bg-surface px-3.5 py-2.5 text-sm placeholder:text-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"></textarea>
+                      <p class="mt-1 text-right text-xs tabular-nums text-muted" x-text="notes.length + ' / 500'"></p>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- 3. Measurements -->
+                <section aria-labelledby="co-measure-title" class="rounded-xl border border-line bg-surface shadow-card">
+                  <header class="flex items-center gap-3 border-b border-line bg-blush/35 px-4 py-3 sm:px-5">
+                    <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-blush text-brand"><i class="h-[17px] w-[17px]" data-lucide="ruler"></i></span>
+                    <div class="min-w-0">
+                      <h2 id="co-measure-title" class="text-base font-semibold leading-6 text-brand-deep">Measurements <span class="text-wine" x-show="measurementsRequired">*</span></h2>
+                      <p class="text-[13px]">Reuse a saved record, or enter new measurements in inches.</p>
+                    </div>
+                  </header>
+                  <div class="space-y-4 p-4 sm:p-5">
+                    <div>
+                      <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-brand-deep" for="co-record">Saved Measurements <span class="font-normal normal-case tracking-normal text-muted">(optional)</span></label>
+                      <div class="relative">
+                        <i class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" data-lucide="calendar-days"></i>
+                        <select id="co-record" x-model="recordId" @change="applyRecord($event.target.value)" :disabled="!selected"
+                                class="h-11 w-full cursor-pointer appearance-none truncate rounded-lg border border-line bg-surface pl-9 pr-9 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 disabled:cursor-not-allowed disabled:opacity-55">
+                          <option value="new" x-text="selected ? 'Enter new measurements' : 'Select a customer first'"></option>
+                          <template x-if="sameGarmentRecords.length > 0">
+                            <optgroup :label="'Saved ' + garment + ' measurements'">
+                              <template x-for="r in sameGarmentRecords" :key="r.key">
+                                <option :value="r.key" x-text="recordLabel(r)"></option>
+                              </template>
+                            </optgroup>
+                          </template>
+                          <template x-if="otherRecords.length > 0">
+                            <optgroup :label="'Other ' + garmentSet.title.toLowerCase() + ' garments'">
+                              <template x-for="r in otherRecords" :key="r.key">
+                                <option :value="r.key" x-text="recordLabel(r)"></option>
+                              </template>
+                            </optgroup>
+                          </template>
+                        </select>
+                        <i class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" data-lucide="chevron-down"></i>
+                      </div>
+                      <p class="mt-1.5 text-sm text-muted" x-show="!selected">Choose a customer to enter or reuse measurements.</p>
+                      <p class="mt-1.5 text-sm text-muted" x-show="selected &amp;&amp; customerRecords.length === 0">No saved measurements for this customer yet. Enter them below.</p>
+                      <p class="mt-1.5 text-sm text-muted" x-show="selected &amp;&amp; customerRecords.length > 0 &amp;&amp; records.length === 0">This customer has no saved <span x-text="garmentSet.title.toLowerCase()"></span> measurements. Enter them below.</p>
+                      <p class="mt-1.5 text-sm text-muted" x-show="selected &amp;&amp; records.length > 0 &amp;&amp; recordId === 'new'">Pick a saved record to fill in the fields, or enter new measurements.</p>
+                      <p class="mt-1.5 text-sm text-muted" x-show="selected &amp;&amp; records.length > 0 &amp;&amp; recordId !== 'new'">Filled in from the saved record. You can adjust the values; changes apply to this order only and the saved record stays unchanged.</p>
+                    </div>
+                    <p class="rounded-lg bg-sage px-3 py-2 text-sm text-moss" x-show="isBulk">Bulk customers are measured per size, so measurements are optional here. If you start entering them, fill in every field.</p>
+                    <div class="rounded-lg border border-line bg-canvas p-4">
+                      <p class="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted">
+                        <i class="h-3.5 w-3.5" data-lucide="ruler"></i> <span x-text="garmentSet.title + ' · inches'"></span>
+                      </p>
+                      <div class="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+                        <template x-for="f in fields" :key="f.label">
+                          <div>
+                            <label :for="f.id" class="mb-1.5 block text-sm font-medium" x-text="f.label"></label>
+                            <div class="relative">
+                              <input :id="f.id" type="number" inputmode="decimal" min="0" max="100" step="0.25" x-model="m[f.label]" :disabled="!selected"
+                                     :aria-invalid="showError('m:' + f.label) ? 'true' : 'false'"
+                                     :class="showError('m:' + f.label) ? 'border-wine focus:border-wine focus:ring-wine/20' : 'border-line focus:border-brand focus:ring-brand/30'"
+                                     class="h-11 w-full rounded-lg border bg-surface pl-3 pr-11 text-sm tabular-nums focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:bg-blush/30 disabled:opacity-60 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"/>
+                              <span class="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md bg-blush px-2 py-0.5 text-xs font-medium text-brand">in</span>
+                            </div>
+                          </div>
+                        </template>
+                      </div>
+                      <p class="mt-3 text-xs font-medium text-wine" role="alert" x-show="measureMessage" x-text="measureMessage"></p>
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              <!-- RIGHT: payment (stacks below on small screens, sticky on lg+) -->
+              <aside class="min-w-0 lg:sticky lg:top-[104px] lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto">
+                <section aria-labelledby="co-payment-title" class="rounded-xl border border-line bg-surface shadow-card">
+                  <header class="flex items-center gap-3 border-b border-line bg-blush/35 px-4 py-3 sm:px-5">
+                    <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-blush text-brand"><i class="h-[17px] w-[17px]" data-lucide="wallet"></i></span>
+                    <div class="min-w-0">
+                      <h2 id="co-payment-title" class="text-base font-semibold leading-6 text-brand-deep">Payment</h2>
+                      <p class="text-[13px]">Down payment and balance</p>
+                    </div>
+                  </header>
+                  <div class="p-4 sm:p-5">
+                    <div class="space-y-4">
+                      <div>
+                        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-brand-deep" for="co-total">Total Price <span class="text-wine">*</span></label>
+                        <div class="relative">
+                          <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted">PHP</span>
+                          <input id="co-total" type="number" inputmode="decimal" min="0" step="any" placeholder="0.00" x-model="total"
+                                 :aria-invalid="showError('total') ? 'true' : 'false'"
+                                 :class="showError('total') ? 'border-wine focus:border-wine focus:ring-wine/20' : 'border-line focus:border-brand focus:ring-brand/30'"
+                                 class="h-11 w-full rounded-lg border bg-surface pl-12 pr-3 text-sm font-medium tabular-nums focus:outline-none focus:ring-2 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"/>
+                        </div>
+                        <p class="mt-1.5 text-xs font-medium text-wine" role="alert" x-show="showError('total')" x-text="showError('total')"></p>
+                      </div>
+                      <div>
+                        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-brand-deep" for="co-down">Down Payment <span class="font-normal normal-case tracking-normal text-muted">(optional)</span></label>
+                        <div class="relative">
+                          <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted">PHP</span>
+                          <input id="co-down" type="number" inputmode="decimal" min="0" step="any" placeholder="0.00" x-model="down"
+                                 :aria-invalid="showError('down') ? 'true' : 'false'" aria-describedby="co-down-error"
+                                 :class="showError('down') ? 'border-wine focus:border-wine focus:ring-wine/20' : 'border-line focus:border-brand focus:ring-brand/30'"
+                                 class="h-11 w-full rounded-lg border bg-surface pl-12 pr-3 text-sm font-medium tabular-nums focus:outline-none focus:ring-2 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"/>
+                        </div>
+                        <p id="co-down-error" class="mt-1.5 text-xs font-medium text-wine" role="alert" x-show="showError('down')" x-text="showError('down')"></p>
+                        <p class="mt-1.5 text-xs text-muted" x-show="!showError('down')">Leave empty if nothing was paid yet.</p>
+                      </div>
+                      <div>
+                        <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-brand-deep" id="co-method-label">Payment Method</span>
+                        <div aria-labelledby="co-method-label" class="grid grid-cols-2 gap-1 rounded-lg bg-blush p-1" role="radiogroup">
+                          <template x-for="opt in methods" :key="opt.value">
+                            <button type="button" role="radio" @click="method = opt.value" :aria-checked="method === opt.value"
+                                    :class="method === opt.value ? 'bg-surface text-brand-deep shadow-sm ring-1 ring-line' : 'text-muted hover:text-ink'"
+                                    class="flex h-10 items-center justify-center gap-2 rounded-md text-sm font-medium transition focus-visible:ring-2 focus-visible:ring-brand/40">
+                              <span x-text="opt.value"></span>
+                            </button>
+                          </template>
+                        </div>
+                        <p class="mt-1.5 text-xs text-muted">Applies to the down payment only.</p>
+                      </div>
+                    </div>
+
+                    <dl class="mt-5 space-y-2 border-t border-dashed border-stitch pt-4 tabular-nums">
+                      <div class="flex justify-between gap-3"><dt>Total</dt><dd class="font-medium" x-text="totalValid ? money(numTotal) : '—'"></dd></div>
+                      <div class="flex justify-between gap-3"><dt>Received now (<span x-text="numDown > 0 ? method : 'none'"></span>)</dt><dd class="font-semibold text-moss" x-text="numDown > 0 ? '−' + money(numDown) : 'PHP 0'"></dd></div>
+                    </dl>
+                    <div class="mt-3 flex items-center justify-between gap-3 rounded-lg border border-line bg-blush px-4 py-3.5">
+                      <span class="text-sm font-semibold text-brand-deep">Remaining Balance</span>
+                      <span aria-live="polite" class="text-xl font-bold tracking-tight tabular-nums text-brand-deep" x-text="paymentOk ? money(balance) : '—'"></span>
+                    </div>
+                    <p class="mt-2 text-xs font-semibold" :class="balance === 0 ? 'text-moss' : 'text-wine'" x-show="paymentOk" x-text="balance === 0 ? 'Paid in full. Nothing left to collect.' : 'Balance due on pickup.'"></p>
+
+                    <div class="mt-5 flex flex-col gap-2">
+                      <div class="rounded-lg border border-wine/30 bg-rosebg px-3 py-2.5 text-xs text-wine" role="alert" x-show="submitted &amp;&amp; errorSummary.length > 0">
+                        <p class="font-semibold" x-text="'Please fix ' + errorSummary.length + (errorSummary.length === 1 ? ' item' : ' items') + ' before creating the order:'"></p>
+                        <ul class="mt-1 space-y-1">
+                          <template x-for="item in errorSummary" :key="item.id">
+                            <li><button type="button" @click="focusField(item.id)" class="text-left underline-offset-2 hover:underline" x-text="item.msg"></button></li>
+                          </template>
+                        </ul>
+                      </div>
+                      <button type="submit" :disabled="saving || created"
+                              class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand text-sm font-semibold text-onbrand shadow-sm transition hover:bg-brand-deep focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-brand">
+                        <i class="h-4 w-4" data-lucide="check"></i> Create Order
+                      </button>
+                      <button type="button" @click="leave()" class="h-10 w-full rounded-lg border border-line bg-surface text-sm font-medium text-brand transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40">Cancel</button>
+                    </div>
+                  </div>
+                </section>
+              </aside>
+            </form>
+
+            <!-- Review order (shown after Create Order is pressed and the form is valid) -->
+            <div class="fixed inset-0 z-[60] flex items-end justify-center bg-ink/50 p-0 backdrop-blur-sm sm:items-center sm:p-4" x-cloak x-show="confirmOpen" @click.self="!saving &amp;&amp; (confirmOpen = false)">
+              <div class="max-h-full w-full max-w-md overflow-y-auto rounded-t-2xl border border-line bg-surface p-5 shadow-xl sm:rounded-2xl sm:p-6" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+                <h2 id="confirm-title" class="font-display text-3xl font-semibold text-brand-deep">Review Order</h2>
+                <p class="mt-1 text-sm text-muted">Check these details with the customer before creating the order.</p>
+                <dl class="mt-4 space-y-2 rounded-lg border border-line bg-canvas p-4 text-sm">
+                  <div class="flex justify-between gap-3"><dt class="text-muted">Customer</dt><dd class="text-right font-medium" x-text="selected ? selected.name : '—'"></dd></div>
+                  <div class="flex justify-between gap-3"><dt class="text-muted">Garment</dt><dd class="text-right font-medium" x-text="garment"></dd></div>
+                  <div class="flex justify-between gap-3"><dt class="text-muted">Assigned tailor</dt><dd class="text-right font-medium" x-text="tailorLabel"></dd></div>
+                  <div class="flex justify-between gap-3"><dt class="text-muted">Pickup date</dt><dd class="text-right font-medium" x-text="dueDate ? fmtDate(dueDate) : '—'"></dd></div>
+                  <div class="flex justify-between gap-3"><dt class="shrink-0 text-muted">Measurements</dt><dd class="text-right font-medium" x-text="measurementText"></dd></div>
+                  <div class="flex justify-between gap-3 border-t border-line pt-2"><dt class="text-muted">Total price</dt><dd class="font-medium tabular-nums" x-text="money(numTotal)"></dd></div>
+                  <div class="flex justify-between gap-3"><dt class="text-muted">Received now</dt><dd class="font-medium tabular-nums" x-text="numDown > 0 ? money(numDown) + ' · ' + method : 'PHP 0'"></dd></div>
+                  <div class="flex justify-between gap-3 border-t border-line pt-2"><dt class="font-semibold">Remaining balance</dt><dd class="font-bold tabular-nums text-brand" x-text="money(balance)"></dd></div>
+                </dl>
+                <p class="mt-3 rounded-lg bg-rosebg px-3 py-2 text-sm font-medium text-wine" role="alert" x-show="saveError" x-text="saveError"></p>
+                <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <button type="button" @click="confirmOpen = false" :disabled="saving" class="h-10 rounded-lg border border-line px-4 text-sm font-medium text-brand hover:bg-blush disabled:cursor-not-allowed disabled:opacity-50">Go Back</button>
+                  <button type="button" @click="confirmOrder()" :disabled="saving || created" class="h-10 rounded-lg bg-brand px-4 text-sm font-semibold text-onbrand hover:bg-brand-deep disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-brand" x-text="saving ? 'Creating…' : 'Create Order'"></button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Discard changes (Cancel / Back with unsaved input) -->
+            <div class="fixed inset-0 z-[60] flex items-end justify-center bg-ink/50 p-0 backdrop-blur-sm sm:items-center sm:p-4" x-cloak x-show="discardOpen" @click.self="discardOpen = false">
+              <div class="max-h-full w-full max-w-sm space-y-4 overflow-y-auto rounded-t-2xl border border-line bg-surface p-5 shadow-xl sm:rounded-2xl sm:p-6" role="alertdialog" aria-modal="true" aria-labelledby="discard-title">
+                <div class="flex items-start gap-3">
+                  <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-rosebg text-wine"><i class="h-5 w-5" data-lucide="alert-triangle"></i></span>
+                  <div class="min-w-0">
+                    <h3 id="discard-title" class="text-lg font-semibold leading-7 text-brand-deep">Discard this order?</h3>
+                    <p class="mt-1 text-sm">Nothing has been saved. The details you entered will be lost.</p>
+                  </div>
+                </div>
+                <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <button type="button" @click="discardOpen = false" class="h-10 rounded-lg border border-line px-4 text-sm font-medium text-brand transition hover:bg-blush">Keep Editing</button>
+                  <button type="button" @click="discard()" class="h-10 rounded-lg bg-wine px-4 text-sm font-semibold text-onbrand transition hover:brightness-95">Discard</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notification -->
+            <div aria-live="polite" role="status" x-cloak x-show="toastMessage !== ''" x-transition
+                 class="fixed bottom-4 left-4 right-4 z-[70] flex items-center gap-3 rounded-xl bg-brand-deep px-4 py-3 text-sm text-onbrand shadow-xl sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-md">
+              <i class="h-[18px] w-[18px] shrink-0 text-emerald-300" data-lucide="info"></i> <span x-text="toastMessage"></span>
+            </div>
+          </div>
+
+          <!-- Add Customer: one shared modal, defined in app.js -->
+          <tahian-customer-modal></tahian-customer-modal>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      /* ------------------------------------------------------------------
+         CREATE ORDER (demo)
+         Saving
+         - A new order is saved with tahianAddOrder() from app.js. That is the same
+           shared list (localStorage key tahian_demo_orders) read by Orders,
+           Order Details and Production Kanban, so nothing is stored on this page.
+         - The order ID is made by tahianAddOrder() at the moment of saving, and the
+           stage always starts as In Progress. Existing orders are not touched.
+         Customers
+         - Customers come from the shared customer records in app.js
+           (tahianGetCustomers). There is no customer list on this page.
+         - "Add a new customer" opens the shared <tahian-customer-modal>. When it
+           saves, it sends "tahian-customer-added" and this page selects that customer
+           without touching the rest of the form.
+         - create-order.html?customerId=C-0001 selects that customer on open
+           (used by "New Order" on Customer Profile). An unknown ID selects nobody and
+           shows a message.
+         - The order stores the customer's stable ID (customerId).
+         Measurements
+         - Saved records come from the shared history in app.js
+           (tahianCustomerMeasurementRecords): Customer Profile records plus
+           measurements on the customer's linked orders. Records are only copied into
+           this order's fields; they are never changed. The order keeps its own copy.
+         Dates
+         - Order date is the fixed demo reference date (TAHIAN_DEMO_TODAY in app.js),
+           not the live calendar, so the October 2026 demo data stays consistent.
+         ------------------------------------------------------------------ */
+      const CO_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      const CO_PAY_METHODS = [{ value: 'Cash' }, { value: 'GCash' }];
+      const CO_QUICK_DUES = [{ days: 3, label: '+3 days' }, { days: 7, label: '+1 week' }, { days: 14, label: '+2 weeks' }];
+      const CO_MAX_DUE_DAYS = 365;
+      const CO_MAX_TOTAL = 1000000;
+
+      function coInitials(name) { return name.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join(''); }
+      function coRound(amount) { return Math.round(amount * 100) / 100; }
+      function coTwoDecimals(amount) { return Math.abs(amount * 100 - Math.round(amount * 100)) < 1e-6; }
+      function coSlug(label) { return label.toLowerCase().replace(/[^a-z]+/g, '-'); }
+      function coAddDays(iso, days) {
+        const date = new Date(iso + 'T00:00:00Z');
+        date.setUTCDate(date.getUTCDate() + days);
+        return date.toISOString().slice(0, 10);
+      }
+
+      function createOrderPage() {
+        return {
+          /* ---------- form state ---------- */
+          refDate: TAHIAN_DEMO_TODAY,
+          garments: TAHIAN_GARMENT_TYPES,
+          methods: CO_PAY_METHODS,
+          quickDues: CO_QUICK_DUES,
+          customers: [],
+          tailors: [], // active tailors only
+          customerKey: null,
+          initialCustomerKey: null, // set when the customer came from the link, so it does not count as typed input
+          preselectMessage: '',
+          customerOpen: false,
+          customerSearch: '',
+          customerRecords: [],
+          recordId: 'new',
+          garment: 'School Uniform',
+          tailorChoice: '', // '' = not chosen yet, 'none' = leave unassigned, otherwise a tailor ID
+          dueDate: '',
+          notes: '',
+          m: { Shoulder: '', Chest: '', Length: '', Sleeve: '', Waist: '', Hip: '', Inseam: '' },
+          total: '',
+          down: '',
+          method: 'Cash',
+          /* ---------- screen state ---------- */
+          submitted: false,
+          confirmOpen: false,
+          discardOpen: false,
+          saving: false,
+          created: false,
+          saveError: '',
+          toastMessage: '',
+          toastTimer: null,
+
+          init() {
+            this.loadTailors();
+            this.loadCustomers();
+            this.applyUrlCustomer();
+            // Upper and lower body use different measurements. Never carry values from one to the other.
+            this.$watch('garmentSetKey', () => {
+              if (this.anyMeasurement) {
+                this.clearMeasurements();
+                this.showToast('Measurements were cleared because this garment uses different measurements.');
+              }
+              this.recordId = 'new';
+            });
+            // A reused record that no longer fits the garment is released (the values stay as typed).
+            this.$watch('garment', () => {
+              if (this.recordId !== 'new' && !this.records.some((record) => record.key === this.recordId)) this.recordId = 'new';
+            });
+          },
+          // Back/forward cache: a page restored after creating an order starts clean.
+          onPageShow(event) {
+            if (!event.persisted) return;
+            if (this.created) { this.resetForm(); this.applyUrlCustomer(); }
+            this.refreshShared();
+          },
+          // Re-read shared data (another tab or page may have changed customers, orders or tailors).
+          refreshShared() {
+            this.loadTailors();
+            this.loadCustomers();
+            this.loadRecords();
+            if (this.recordId !== 'new' && !this.records.some((record) => record.key === this.recordId)) this.recordId = 'new';
+          },
+
+          /* ---------- formatting ---------- */
+          money(amount) {
+            const n = Number(amount);
+            return 'PHP ' + n.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 });
+          },
+          fmtDate(iso) {
+            const parts = String(iso).split('-');
+            return CO_MONTHS[Number(parts[1]) - 1] + ' ' + Number(parts[2]) + ', ' + parts[0];
+          },
+
+          /* ---------- shared data ---------- */
+          loadTailors() {
+            this.tailors = tahianGetActiveTailors();
+            // A tailor who became inactive can no longer receive a new order.
+            if (this.tailorChoice && this.tailorChoice !== 'none' && !this.tailors.some((tailor) => tailor.id === this.tailorChoice)) {
+              this.tailorChoice = '';
+            }
+          },
+          loadCustomers() {
+            this.customers = tahianGetCustomers().map((c) => ({
+              key: c.id, id: c.id, name: c.name, mobile: c.mobile, phone: c.mobile || '', phoneText: tahianFormatMobile(c.mobile),
+              type: c.type, initials: coInitials(c.name), color: c.type === 'Bulk' ? 'bg-sand text-ochre' : 'bg-blush text-brand'
+            }));
+          },
+
+          /* ---------- customer ---------- */
+          get selected() { return this.customers.find((c) => c.key === this.customerKey) || null; },
+          get isBulk() { return !!this.selected && this.selected.type === 'Bulk'; },
+          // Search by name, customer ID or mobile number (same rules as the Customers page).
+          filteredCustomers() {
+            return this.customers.filter((c) => tahianCustomerMatchesQuery(c, this.customerSearch));
+          },
+          toggleCustomers() {
+            this.customerOpen = !this.customerOpen;
+            if (this.customerOpen) this.$nextTick(() => this.$refs.customerSearchInput && this.$refs.customerSearchInput.focus());
+          },
+          // keepEntered: used right after registering a customer, so measurements the
+          // employee already typed are not thrown away. Values copied from another
+          // customer's saved record are always cleared.
+          pickCustomer(key, keepEntered) {
+            this.customerOpen = false;
+            this.customerSearch = '';
+            if (key === this.customerKey) return;
+            this.customerKey = key;
+            this.preselectMessage = '';
+            if (!keepEntered || this.recordId !== 'new') this.clearMeasurements(); // never carry measurements over silently
+            this.recordId = 'new';
+            this.loadRecords();
+          },
+          // ?customerId=C-0001 (from Customer Profile). Only an exact, existing ID is selected.
+          applyUrlCustomer() {
+            const raw = new URLSearchParams(window.location.search).get('customerId');
+            if (raw === null) return;
+            const id = raw.trim();
+            const customer = id === '' ? null : tahianGetCustomer(id);
+            if (!customer) {
+              this.preselectMessage = id === ''
+                ? 'The link did not include a customer. Choose the customer below.'
+                : 'No customer with the ID “' + id + '” was found. Choose the customer below.';
+              return;
+            }
+            this.pickCustomer(customer.id);
+            this.initialCustomerKey = customer.id;
+          },
+          // The shared Add Customer modal saved a customer: list them and select them.
+          // Nothing else on the form is reset.
+          onCustomerAdded(customer) {
+            if (!customer) return;
+            this.loadCustomers();
+            this.pickCustomer(customer.id, true);
+          },
+          openNewCustomer() {
+            this.customerOpen = false;
+            const typed = this.customerSearch;
+            this.customerSearch = '';
+            tahianOpenAddCustomer(typed);
+          },
+
+          /* ---------- measurements ---------- */
+          get garmentSetKey() { return (TAHIAN_GARMENT_TYPES.find((g) => g.name === this.garment) || TAHIAN_GARMENT_TYPES[0]).set; },
+          get garmentSet() { return TAHIAN_MEASURE_SETS[this.garmentSetKey]; },
+          get fields() { return this.garmentSet.labels.map((label) => ({ label: label, id: 'co-m-' + coSlug(label) })); },
+          get measurementsRequired() { return !this.isBulk; },
+          get anyMeasurement() { return this.fields.some((f) => String(this.m[f.label] == null ? '' : this.m[f.label]).trim() !== ''); },
+          // Every measurement record for the selected customer, newest first (shared history logic in app.js).
+          loadRecords() {
+            const customer = this.customerKey ? tahianGetCustomer(this.customerKey) : null;
+            if (!customer) { this.customerRecords = []; return; }
+            const linked = tahianLinkOrdersToCustomers(tahianGetCustomers(), tahianGetOrders()).byCustomer[customer.id] || [];
+            this.customerRecords = tahianCustomerMeasurementRecords(customer, linked);
+          },
+          // Only records of the same body area that contain every measurement this garment needs.
+          get fittingRecords() {
+            const labels = this.garmentSet.labels;
+            return this.customerRecords.filter((r) => r.category === this.garmentSetKey && labels.every((label) => r.values.some((v) => v[0] === label)));
+          },
+          get sameGarmentRecords() {
+            const key = tahianNormalizeName(this.garment);
+            return this.fittingRecords.filter((r) => r.garmentKey === key);
+          },
+          get otherRecords() {
+            const key = tahianNormalizeName(this.garment);
+            return this.fittingRecords.filter((r) => r.garmentKey !== key);
+          },
+          get records() { return this.sameGarmentRecords.concat(this.otherRecords); },
+          recordLabel(r) {
+            return r.garment + ' · ' + (r.date ? this.fmtDate(r.date) : 'Date not recorded') + ' · ' +
+              (r.source === 'order' ? 'From ' + r.orderId : 'Profile update') + (r.isLatest ? ' · Latest' : '');
+          },
+          clearMeasurements() { Object.keys(this.m).forEach((label) => { this.m[label] = ''; }); },
+          // Copies a saved record into this order's fields. The saved record itself is never changed.
+          applyRecord(key) {
+            this.recordId = key;
+            const record = this.records.find((r) => r.key === key);
+            this.clearMeasurements();
+            if (record) {
+              this.garmentSet.labels.forEach((label) => {
+                const entry = record.values.find((v) => v[0] === label);
+                if (entry) this.m[label] = String(entry[1]);
+              });
+            }
+          },
+          get measurementText() {
+            if (!this.anyMeasurement) return 'Not recorded';
+            return this.fields.map((f) => f.label + ' ' + this.m[f.label]).join(', ') + ' (in)';
+          },
+
+          /* ---------- tailor ---------- */
+          get tailorLabel() {
+            if (this.tailorChoice === 'none') return 'Unassigned';
+            const tailor = this.tailors.find((t) => t.id === this.tailorChoice);
+            return tailor ? tailor.name : '—';
+          },
+
+          /* ---------- due date ---------- */
+          get maxDue() { return coAddDays(this.refDate, CO_MAX_DUE_DAYS); },
+          dueIn(days) { return coAddDays(this.refDate, days); },
+          setDue(days) { this.dueDate = this.dueIn(days); },
+          openDatePicker(input) {
+            try { if (input.showPicker) input.showPicker(); } catch (_) { /* The browser will use its normal date entry. */ }
+          },
+
+          /* ---------- payment ---------- */
+          get numTotal() { return String(this.total).trim() === '' ? NaN : Number(this.total); },
+          get numDown() { return String(this.down).trim() === '' ? 0 : Number(this.down); },
+          get totalValid() { return !this.errors.total; },
+          get paymentOk() { return !this.errors.total && !this.errors.down; },
+          get balance() { return this.paymentOk ? coRound(Math.max(this.numTotal - this.numDown, 0)) : 0; },
+
+          /* ---------- validation ---------- */
+          // Each error: { msg, live }. "live" errors (a value was typed but is wrong) show at once;
+          // the others (a field left empty) show after the first Create Order press.
+          get errors() {
+            const e = {};
+            const bad = (key, msg, live) => { e[key] = { msg: msg, live: !!live }; };
+            if (!this.selected) bad('customer', 'Select a customer, or add a new one.');
+            if (!this.tailorChoice) bad('tailor', 'Choose a tailor, or select “Leave unassigned”.');
+
+            if (!this.dueDate) bad('due', 'Choose the promised pickup date.');
+            else if (!/^\d{4}-\d{2}-\d{2}$/.test(this.dueDate)) bad('due', 'Enter a valid pickup date.', true);
+            else if (this.dueDate < this.refDate) bad('due', 'Pickup date can’t be before the order date (' + this.fmtDate(this.refDate) + ').', true);
+            else if (this.dueDate > this.maxDue) bad('due', 'Pickup date must be within 1 year of the order date.', true);
+
+            if (this.measurementsRequired || this.anyMeasurement) {
+              this.fields.forEach((f) => {
+                const raw = String(this.m[f.label] == null ? '' : this.m[f.label]).trim();
+                if (raw === '') { bad('m:' + f.label, 'Enter ' + f.label.toLowerCase() + ' in inches.'); return; }
+                const n = Number(raw);
+                if (!isFinite(n) || n <= 0 || n > 100) bad('m:' + f.label, f.label + ' must be more than 0 and at most 100 in.', true);
+              });
+            }
+
+            const total = this.numTotal;
+            if (String(this.total).trim() === '') bad('total', 'Enter the total price.');
+            else if (!isFinite(total) || total <= 0) bad('total', 'Total price must be more than PHP 0.', true);
+            else if (!coTwoDecimals(total)) bad('total', 'Use at most 2 decimal places.', true);
+            else if (total > CO_MAX_TOTAL) bad('total', 'Total price can’t be more than ' + this.money(CO_MAX_TOTAL) + '.', true);
+
+            if (String(this.down).trim() !== '') {
+              const down = Number(this.down);
+              if (!isFinite(down)) bad('down', 'Enter a valid down payment amount.', true);
+              else if (down < 0) bad('down', 'Down payment can’t be negative.', true);
+              else if (!coTwoDecimals(down)) bad('down', 'Use at most 2 decimal places.', true);
+              else if (!e.total && down > total) bad('down', 'Down payment can’t be more than the total price (' + this.money(total) + ').', true);
+            }
+            return e;
+          },
+          get canSubmit() { return Object.keys(this.errors).length === 0; },
+          showError(key) {
+            const found = this.errors[key];
+            return found && (this.submitted || found.live) ? found.msg : '';
+          },
+          // One line for the whole measurements group.
+          get measureMessage() {
+            const missing = [];
+            const problems = [];
+            this.fields.forEach((f) => {
+              const found = this.errors['m:' + f.label];
+              if (!found || !(this.submitted || found.live)) return;
+              if (found.live) problems.push(found.msg); else missing.push(f.label);
+            });
+            if (missing.length) problems.unshift('Enter ' + missing.join(', ') + ' in inches.');
+            return problems.join(' ');
+          },
+          // Shown under the Create Order button after a failed attempt.
+          get errorSummary() {
+            const items = [];
+            let measureAdded = false;
+            Object.keys(this.errors).forEach((key) => {
+              if (key.indexOf('m:') !== 0) { items.push({ id: this.fieldId(key), msg: this.errors[key].msg }); return; }
+              if (measureAdded) return; // all measurements are listed as one item
+              measureAdded = true;
+              items.push({ id: this.fieldId(key), msg: this.measureMessage || 'Complete the measurements.' });
+            });
+            return items;
+          },
+          fieldId(key) {
+            if (key === 'customer') return 'co-customer-btn';
+            if (key === 'tailor') return 'co-tailor';
+            if (key === 'due') return 'co-due';
+            if (key === 'total') return 'co-total';
+            if (key === 'down') return 'co-down';
+            return 'co-m-' + coSlug(key.slice(2));
+          },
+          focusField(id) {
+            const el = document.getElementById(id);
+            if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.focus({ preventScroll: true }); }
+          },
+
+          /* ---------- submit ---------- */
+          submitOrder() {
+            if (this.saving || this.created) return;
+            this.submitted = true;
+            this.saveError = '';
+            if (!this.canSubmit) {
+              const first = Object.keys(this.errors)[0];
+              this.$nextTick(() => this.focusField(this.fieldId(first)));
+              return;
+            }
+            this.confirmOpen = true;
+          },
+          confirmOrder() {
+            if (this.saving || this.created) return; // blocks double clicks and repeat submissions
+            this.loadTailors(); // the tailor may have been made inactive since it was chosen
+            if (!this.canSubmit) {
+              this.confirmOpen = false;
+              this.showToast('Something changed. Please check the highlighted fields.');
+              return;
+            }
+            // Read the customer again, so details edited on another page are used.
+            const c = this.customerKey ? tahianGetCustomer(this.customerKey) : null;
+            if (!c) {
+              this.confirmOpen = false;
+              this.customerKey = null;
+              this.recordId = 'new';
+              this.loadCustomers();
+              this.loadRecords();
+              this.showToast('That customer record could not be found. Please select the customer again.');
+              return;
+            }
+            this.saving = true;
+            this.saveError = '';
+            const down = coRound(this.numDown);
+            const total = coRound(this.numTotal);
+            const balance = coRound(Math.max(total - down, 0));
+            const result = tahianAddOrder({
+              customerId: c.id,
+              customer: c.name,
+              greet: c.type === 'Bulk' ? c.name : c.name.split(' ')[0],
+              phone: c.mobile || null,
+              garment: this.garment,
+              tailorId: this.tailorChoice === 'none' ? '' : this.tailorChoice,
+              orderDate: this.refDate,
+              due: this.dueDate,
+              notes: this.notes,
+              measurements: this.anyMeasurement ? this.fields.map((f) => [f.label, Number(this.m[f.label])]) : [],
+              total: total,
+              paid: down,
+              pay: balance === 0 ? 'Paid' : 'Unpaid',
+              payMethod: down > 0 ? this.method : ''
+            });
+            if (!result || !result.saved) {
+              this.saving = false;
+              this.saveError = result
+                ? 'The order could not be saved because browser storage is full or blocked. Nothing was created.'
+                : 'The order details could not be saved. Nothing was created.';
+              return;
+            }
+            this.created = true;
+            window.location.assign(tahianOrderDetailUrl(result.order));
+          },
+
+          /* ---------- leaving, resetting, feedback ---------- */
+          get dirty() {
+            return (!!this.customerKey && this.customerKey !== this.initialCustomerKey) || this.tailorChoice !== '' || this.dueDate !== '' || this.notes.trim() !== '' ||
+              this.total !== '' || this.down !== '' || this.anyMeasurement;
+          },
+          leave() {
+            if (this.dirty && !this.created) { this.discardOpen = true; return; }
+            window.location.assign(TAHIAN_ROUTES.orders);
+          },
+          discard() {
+            this.discardOpen = false;
+            window.location.assign(TAHIAN_ROUTES.orders);
+          },
+          resetForm() {
+            this.customerKey = null;
+            this.initialCustomerKey = null;
+            this.preselectMessage = '';
+            this.customerRecords = [];
+            this.recordId = 'new';
+            this.garment = 'School Uniform';
+            this.tailorChoice = '';
+            this.dueDate = '';
+            this.notes = '';
+            this.clearMeasurements();
+            this.total = '';
+            this.down = '';
+            this.method = 'Cash';
+            this.submitted = false;
+            this.confirmOpen = false;
+            this.saving = false;
+            this.created = false;
+            this.saveError = '';
+          },
+          closeTopLayer() {
+            if (this.discardOpen) this.discardOpen = false;
+            else if (this.confirmOpen && !this.saving) this.confirmOpen = false;
+            else this.customerOpen = false;
+          },
+          showToast(message) {
+            this.toastMessage = message;
+            clearTimeout(this.toastTimer);
+            this.toastTimer = setTimeout(() => { this.toastMessage = ''; }, 5500);
+          }
+        };
+      }
+    </script>
+    <script>
+      lucide.createIcons();
+      document.addEventListener('alpine:initialized', () => {
+        Alpine.effect(() => { lucide.createIcons(); });
+      });
+    </script>
+
+    <!-- print job slip (unchanged) -->
+    <div class="hidden print:block" id="print-job-slip">
+      <div class="text-center border-b border-dashed border-black pb-3">
+        <h1 class="text-xl font-bold tracking-tight">TahiAN</h1>
+        <p class="font-semibold">Morsons HOME Industries</p>
+        <p>Poblacion, Iligan City</p>
+        <p class="mt-2 text-sm font-bold uppercase tracking-widest">Job Slip</p>
+      </div>
+      <div class="py-3 border-b border-dashed border-black">
+        <p class="text-center text-lg font-bold">ORD 1043</p>
+        <dl class="mt-2 space-y-1">
+          <div class="flex justify-between gap-3"><dt>Garment</dt><dd class="font-semibold text-right">School Polo</dd></div>
+          <div class="flex justify-between gap-3"><dt>Order date</dt><dd class="text-right">Oct 28, 2026</dd></div>
+          <div class="flex justify-between gap-3"><dt>Due date</dt><dd class="font-semibold text-right">Oct 28, 2026</dd></div>
+        </dl>
+      </div>
+      <div class="py-3 border-b border-dashed border-black">
+        <h2 class="mb-2 font-bold uppercase">Customer &amp; Assignment</h2>
+        <dl class="space-y-1">
+          <div class="flex justify-between gap-3"><dt>Customer</dt><dd class="font-semibold text-right">Lance Sacay</dd></div>
+          <div class="flex justify-between gap-3"><dt>Mobile</dt><dd class="text-right">09116912544</dd></div>
+          <div class="flex justify-between gap-3"><dt>Assigned tailor</dt><dd class="font-semibold text-right">Robert</dd></div>
+        </dl>
+      </div>
+      <div class="py-3 border-b border-dashed border-black">
+        <h2 class="mb-2 font-bold uppercase">Measurements — Inches</h2>
+        <table class="w-full">
+          <tbody>
+            <tr><td class="py-0.5">Shoulder</td><td class="text-right font-semibold">17</td><td class="pl-4">Chest</td><td class="text-right font-semibold">38</td></tr>
+            <tr><td class="py-0.5">Length</td><td class="text-right font-semibold">28</td><td class="pl-4">Sleeve</td><td class="text-right font-semibold">9</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="py-3 border-b border-dashed border-black">
+        <h2 class="mb-2 font-bold uppercase">Payment</h2>
+        <dl class="space-y-1">
+          <div class="flex justify-between gap-3"><dt>Total</dt><dd>PHP 2,800</dd></div>
+          <div class="flex justify-between gap-3"><dt>Amount paid</dt><dd>PHP 1,500</dd></div>
+          <div class="flex justify-between gap-3 pt-1 font-bold"><dt>Balance</dt><dd>PHP 1,300</dd></div>
+        </dl>
+      </div>
+      <div class="py-3 border-b border-dashed border-black">
+        <h2 class="font-bold uppercase">Tailoring Notes</h2>
+        <div class="h-6 border-b border-black"></div>
+        <div class="h-6 border-b border-black"></div>
+      </div>
+      <div class="pt-3 text-center">
+        <img alt="QR code placeholder — not scannable" class="block mx-auto w-20 h-20" height="80" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect x='1' y='1' width='98' height='98' fill='white' stroke='black' stroke-dasharray='4 3'/%3E%3Ctext x='50' y='46' text-anchor='middle' font-family='Arial' font-size='18'%3EQR%3C/text%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-size='10'%3EPLACEHOLDER%3C/text%3E%3C/svg%3E" width="80"/>
+        <p class="mt-1 text-[9px]">QR placeholder — not scannable</p>
+        <p class="mt-3">Please present this slip when collecting your order.</p>
+        <p class="mt-1 font-semibold">Thank you!</p>
+      </div>
+    </div>
+  </body>
+</html>

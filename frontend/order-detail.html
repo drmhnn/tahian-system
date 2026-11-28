@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TahiAN | Order Details</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  // TahiAN design tokens for Tailwind (inline config, no extra files)
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          canvas: '#F7F3EF', sidebar: '#FCFAF7', surface: '#FFFDFA',
+          brand: { DEFAULT: '#733E50', deep: '#542B3A' },
+          onbrand: '#FFFAF3', onbrandmuted: '#EBD8DF',
+          ink: '#34232B', muted: '#807279', line: '#E8DEDA', stitch: '#CBB7B7',
+          blush: '#F1E6E6', rosebg: '#F7E6E8', wine: '#933D50', moss: '#365C46',
+          sage: '#EDF3EC', sand: '#FBF0DF', ochre: '#845927', avatar: '#EEE5DC'
+        },
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          display: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+          logo: ['"Bricolage Grotesque"', 'Inter', 'sans-serif']
+        },
+        boxShadow: { card: '0 2px 12px rgba(54,26,36,.05)' }
+      }
+    }
+  };
+</script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500&family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="styles.css" rel="stylesheet"/>
+<script src="app.js"></script>
+</head>
+<!-- All order data and behaviour live in orderDetailPage() (script at the bottom of this file),
+     merged into the shared app state through tahianApp's pageExtras argument. -->
+<body class="flex h-[100dvh] overflow-hidden bg-canvas font-sans text-sm text-ink antialiased sm:text-[15px]" x-data="tahianApp('order_details', orderDetailPage(), { requireLogin: true })">
+<!-- APP SHELL: sidebar (drawer below lg) + workspace -->
+<div class="flex min-w-0 flex-1 print:hidden" x-cloak x-show="loggedIn" x-data="{ menu: false }" @keydown.escape.window="menu = false">
+  <!-- SIDEBAR: one shared definition in app.js (TAHIAN_NAV_ITEMS) -->
+  <tahian-sidebar></tahian-sidebar>
+  <!-- MAIN WORKSPACE -->
+  <div class="flex min-w-0 flex-1 flex-col overflow-y-auto">
+    <header class="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 border-b border-line bg-sidebar px-4 sm:gap-3 sm:px-6 lg:h-[88px] lg:px-8">
+      <button type="button" @click="menu = true" class="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-line bg-surface text-brand transition hover:bg-blush lg:hidden" aria-label="Open menu" aria-controls="sidebar" :aria-expanded="menu">
+        <i class="h-5 w-5" data-lucide="menu"></i>
+      </button>
+      <label class="relative min-w-0 max-w-md flex-1">
+        <i class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" data-lucide="search"></i>
+        <input class="h-10 w-full rounded-lg border border-line bg-canvas pl-9 pr-3 text-sm text-ink placeholder:text-ink/70 focus:outline-none focus:ring-2 focus:ring-brand/40" type="text" placeholder="Client, order, or Fabric ID" aria-label="Search clients, orders, or fabric IDs"/>
+      </label>
+      <div class="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+        <div class="hidden text-sm leading-tight sm:block"><div class="font-semibold" x-text="userName || 'Guest'">Guest</div><div class="text-xs" x-text="userRole || 'Not signed in'">Not signed in</div></div>
+        <div class="grid h-9 w-9 place-items-center rounded-full bg-blush text-brand"><i class="h-4 w-4" data-lucide="user"></i></div>
+        <button type="button" @click="logout()" aria-label="Log out" class="inline-flex h-10 items-center gap-2 rounded-lg border border-line bg-surface px-2.5 text-sm font-medium text-brand shadow-sm transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40 sm:px-3.5">
+          <i class="h-4 w-4" data-lucide="log-out"></i><span class="hidden sm:inline">Log out</span>
+        </button>
+      </div>
+    </header>
+    <main class="mx-auto w-full max-w-[1500px] px-4 pb-8 pt-5 sm:px-6 lg:px-8 lg:pt-6">
+      <!-- SCREEN: Order Details
+           x-effect redraws Lucide icons whenever the visible content changes. -->
+      <div x-cloak x-show="currentTab === 'order_details'" class="space-y-3 lg:space-y-4"
+           @pageshow.window="refresh()" @storage.window="refresh()"
+           x-effect="view; stage; extraPayments.length; payOpen; claimOpen; simulated; toast.show; $nextTick(() => window.lucide && lucide.createIcons())">
+        <!-- ============ STATE: no order chosen (opened without ?id=) ============ -->
+        <template x-if="view === 'select'">
+          <div class="space-y-4 lg:space-y-5">
+            <div>
+              <p class="text-xs font-medium sm:text-sm">Orders / Order details</p>
+              <h1 class="mt-0.5 font-display text-3xl font-semibold leading-tight text-brand-deep sm:text-4xl">Choose an order</h1>
+              <div class="mt-1.5 h-0.5 w-40 bg-[repeating-linear-gradient(90deg,#D4B0BC_0_6px,transparent_6px_10px)]"></div>
+              <p class="mt-2 max-w-xl text-[13px] sm:text-sm">No order was selected. Pick one below, or open an order from the Orders list.</p>
+            </div>
+            <section class="overflow-hidden rounded-xl border border-line bg-surface shadow-card" aria-label="Demo orders">
+              <ul class="divide-y divide-line">
+                <template x-for="o in allOrders" :key="o.id">
+                  <li>
+                    <a :href="detailUrl(o)" class="flex items-center gap-3 px-4 py-3.5 transition hover:bg-blush/70 focus:outline-none focus-visible:bg-blush/70 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/40 sm:px-5">
+                      <span class="w-24 shrink-0 font-semibold tabular-nums text-brand-deep" x-text="o.id"></span>
+                      <span class="min-w-0 flex-1 truncate"><span class="font-medium" x-text="o.customer"></span><span class="text-muted"> · </span><span x-text="o.garment"></span></span>
+                      <i class="h-4 w-4 shrink-0 text-brand" data-lucide="chevron-right"></i>
+                    </a>
+                  </li>
+                </template>
+              </ul>
+            </section>
+            <a href="orders.html" class="inline-flex h-10 items-center gap-2 rounded-lg border border-line bg-surface px-4 text-sm font-medium text-brand shadow-sm transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40">
+              <i class="h-4 w-4" data-lucide="arrow-left"></i> Back to Orders
+            </a>
+          </div>
+        </template>
+        <!-- ============ STATE: unknown order ID ============ -->
+        <template x-if="view === 'missing'">
+          <div class="space-y-4 lg:space-y-5">
+            <div>
+              <p class="text-xs font-medium sm:text-sm">Orders / Order details</p>
+              <h1 class="mt-0.5 font-display text-3xl font-semibold leading-tight text-brand-deep sm:text-4xl">Order not found</h1>
+              <div class="mt-1.5 h-0.5 w-40 bg-[repeating-linear-gradient(90deg,#D4B0BC_0_6px,transparent_6px_10px)]"></div>
+            </div>
+            <section class="grid place-items-center gap-1 rounded-xl border border-dashed border-stitch bg-surface px-4 py-12 text-center shadow-card" role="alert">
+              <span class="grid h-10 w-10 place-items-center rounded-full bg-rosebg text-wine"><i class="h-5 w-5" data-lucide="search-x"></i></span>
+              <p class="mt-2 font-semibold">We couldn’t find an order with the ID “<span x-text="requestedId"></span>”.</p>
+              <p class="max-w-md text-[13px] text-muted sm:text-sm">The link may be mistyped, or the order may not exist in the demo data.</p>
+              <div class="mt-3 flex flex-wrap items-center justify-center gap-2">
+                <a href="orders.html" class="inline-flex h-10 items-center gap-2 rounded-lg bg-brand px-4 text-sm font-semibold text-onbrand shadow-sm transition hover:bg-brand-deep focus-visible:ring-2 focus-visible:ring-brand/40">
+                  <i class="h-4 w-4" data-lucide="arrow-left"></i> Back to Orders
+                </a>
+                <a href="order-detail.html" class="inline-flex h-10 items-center rounded-lg border border-line bg-surface px-4 text-sm font-medium text-brand transition hover:bg-blush">Pick from the demo list</a>
+              </div>
+            </section>
+          </div>
+        </template>
+        <!-- ============ STATE: order loaded ============ -->
+        <template x-if="view === 'order'">
+          <div class="space-y-3 lg:space-y-4">
+            <a href="orders.html" class="inline-flex h-9 items-center gap-1.5 rounded-lg text-sm font-semibold text-brand transition hover:text-brand-deep focus-visible:ring-2 focus-visible:ring-brand/40">
+              <i class="h-4 w-4" data-lucide="arrow-left"></i> Back to Orders
+            </a>
+            <!-- Page header: order ID, garment, status, due -->
+            <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+              <div class="min-w-0">
+                <p class="text-xs font-medium sm:text-sm">Orders / <span x-text="order.id"></span></p>
+                <div class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <h1 class="font-display text-3xl font-semibold leading-tight text-brand-deep sm:text-4xl" x-text="order.id"></h1>
+                  <span x-show="stage === 'in_progress'" class="inline-flex h-7 items-center gap-1.5 rounded-full bg-sand pl-2.5 pr-3 text-xs font-medium text-ochre sm:text-[13px]"><i class="h-3 w-3" data-lucide="clock"></i> In Progress</span>
+                  <span x-show="stage === 'ready'" class="inline-flex h-7 items-center gap-1.5 rounded-full bg-sage pl-2.5 pr-3 text-xs font-medium text-moss sm:text-[13px]"><i class="h-3 w-3" data-lucide="package-check"></i> Ready for Pickup</span>
+                  <span x-show="stage === 'claimed'" class="inline-flex h-7 items-center gap-1.5 rounded-full bg-sage pl-2.5 pr-3 text-xs font-medium text-moss sm:text-[13px]"><i class="h-3 w-3" data-lucide="circle-check-big"></i> Claimed</span>
+                </div>
+                <div class="mt-1.5 h-0.5 w-40 bg-[repeating-linear-gradient(90deg,#D4B0BC_0_6px,transparent_6px_10px)]"></div>
+                <p class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[13px] sm:text-sm">
+                  <span class="inline-flex items-center gap-1.5 font-semibold text-ink"><i class="h-4 w-4 text-muted" data-lucide="shirt"></i> <span x-text="order.garment"></span></span>
+                  <span class="text-stitch" aria-hidden="true">·</span>
+                  <span x-text="order.customer"></span>
+                  <span class="text-stitch" aria-hidden="true">·</span>
+                  <span class="inline-flex h-6 items-center gap-1 rounded-full px-2 text-xs font-semibold" :class="dueBadge.cls">
+                    <i class="h-3 w-3" data-lucide="calendar-clock"></i><span x-text="dueBadge.text"></span>
+                  </span>
+                </p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <button type="button" onclick="window.print()" title="Print this order's job slip" class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 text-sm font-medium text-brand shadow-sm transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40">
+                  <i class="h-4 w-4" data-lucide="printer"></i> Print Job Slip
+                </button>
+              </div>
+            </div>
+            <!-- Balance warning: ready or claimed orders with an unpaid or unknown balance -->
+            <div x-show="stage !== 'in_progress' && !pay.settled" role="alert" class="flex flex-col gap-3 rounded-xl border border-wine/30 bg-rosebg p-3.5 sm:flex-row sm:items-center sm:p-4">
+              <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface text-wine"><i class="h-[18px] w-[18px]" data-lucide="alert-triangle"></i></span>
+              <p class="min-w-0 flex-1 text-sm font-medium text-wine" x-text="balanceWarning"></p>
+              <button type="button" x-show="canRecordPayment" @click="openPay()" class="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg bg-wine px-3.5 text-sm font-semibold text-onbrand transition hover:brightness-95 focus-visible:ring-2 focus-visible:ring-wine/40">
+                <i class="h-4 w-4" data-lucide="wallet"></i> Record Payment
+              </button>
+            </div>
+            <!-- At a glance: balance, due date, customer and tailor -->
+            <section class="grid grid-cols-2 divide-line overflow-hidden rounded-xl border border-line bg-surface shadow-card sm:grid-cols-4 sm:divide-x" aria-label="Order summary">
+              <div class="p-3.5 sm:p-4" :class="pay.settled ? 'bg-sage' : 'bg-rosebg'">
+                <p class="text-xs font-semibold uppercase tracking-wider" :class="pay.settled ? 'text-moss' : 'text-wine'">Balance</p>
+                <p class="mt-1 text-xl font-semibold leading-tight tabular-nums sm:text-2xl" :class="pay.settled ? 'text-moss' : 'text-wine'" x-text="pay.balance === null ? 'Not recorded' : money(pay.balance)"></p>
+                <p class="mt-0.5 text-xs" :class="pay.settled ? 'text-moss' : 'text-wine'" x-text="pay.settled ? 'Nothing to collect' : (pay.balance === null ? 'Confirm with customer' : 'To collect')"></p>
+              </div>
+              <div class="p-3.5 sm:p-4">
+                <p class="text-xs font-semibold uppercase tracking-wider text-muted">Due</p>
+                <p class="mt-1 text-base font-semibold leading-tight sm:text-lg" :class="dueState === 'overdue' ? 'text-wine' : 'text-brand-deep'" x-text="fmtDate(order.due)"></p>
+                <p class="mt-0.5 text-xs" :class="dueState === 'overdue' ? 'font-semibold text-wine' : ''" x-text="dueBadge.text"></p>
+              </div>
+              <div class="border-t border-line p-3.5 sm:border-t-0 sm:p-4">
+                <p class="text-xs font-semibold uppercase tracking-wider text-muted">Customer</p>
+                <p class="mt-1 truncate text-base font-semibold leading-tight text-brand-deep sm:text-lg" x-text="order.customer"></p>
+                <p class="mt-0.5 truncate text-xs tabular-nums" x-text="order.phone || 'Mobile not recorded'"></p>
+              </div>
+              <div class="border-t border-line p-3.5 sm:border-t-0 sm:p-4">
+                <p class="text-xs font-semibold uppercase tracking-wider text-muted">Tailor</p>
+                <p class="mt-1 truncate text-base font-semibold leading-tight text-brand-deep sm:text-lg" x-text="order.tailorId ? tailorName : 'Unassigned'"></p>
+                <p class="mt-0.5 truncate text-xs" x-text="tailorInactive ? 'Inactive tailor' : order.garment"></p>
+              </div>
+            </section>
+            <!-- Production progress (compact) -->
+            <section class="rounded-xl border border-line bg-surface p-3.5 shadow-card sm:p-4" aria-labelledby="progress-title">
+              <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div class="min-w-0">
+                  <h2 id="progress-title" class="text-base font-semibold leading-6 text-brand-deep">Production Progress</h2>
+                  <p class="text-[13px]" x-text="stageHint"></p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <button type="button" x-show="prevStage" @click="requestMove(prevStage.key)"
+                          class="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-sm font-semibold text-brand transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40">
+                    <i class="h-3.5 w-3.5" data-lucide="undo-2"></i> <span x-text="'Back to ' + (prevStage ? prevStage.label : '')"></span>
+                  </button>
+                  <button type="button" x-show="nextStage" @click="requestMove(nextStage.key)"
+                          class="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-brand px-4 text-sm font-semibold text-onbrand shadow-sm transition hover:bg-brand-deep focus-visible:ring-2 focus-visible:ring-brand/40">
+                    <i class="h-4 w-4" data-lucide="arrow-right"></i> <span x-text="moveLabel"></span>
+                  </button>
+                  <p x-show="!nextStage" class="inline-flex items-center gap-1.5 text-sm font-medium text-moss"><i class="h-4 w-4" data-lucide="circle-check-big"></i> Handed to the customer</p>
+                </div>
+              </div>
+              <ol class="mt-3 grid grid-cols-3 gap-2" aria-label="Order progress">
+                <template x-for="(s, i) in stages" :key="s.key">
+                  <li class="flex min-w-0 items-center gap-2 rounded-lg border px-2.5 py-2" :class="tileClass(i)" :aria-current="i === stageIndex ? 'step' : null">
+                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full" :class="stepClass(i)">
+                      <span x-show="stepState(i) === 'done'"><i class="h-3.5 w-3.5" data-lucide="check"></i></span>
+                      <span x-show="stepState(i) !== 'done'"><i class="h-3.5 w-3.5" :data-lucide="s.icon"></i></span>
+                    </span>
+                    <span class="min-w-0">
+                      <span class="hidden text-[11px] font-semibold uppercase leading-none tracking-wider text-muted sm:block" x-text="'Step ' + (i + 1)"></span>
+                      <span class="block text-[13px] font-semibold leading-tight sm:text-sm" :class="i <= stageIndex ? 'text-brand-deep' : 'text-muted'" x-text="s.label"></span>
+                    </span>
+                  </li>
+                </template>
+              </ol>
+            </section>
+            <div class="grid gap-3 lg:grid-cols-2 lg:gap-4">
+              <!-- Payment -->
+              <section class="flex flex-col rounded-xl border border-line bg-surface p-4 shadow-card sm:p-5" aria-labelledby="pay-card-title">
+                <div class="flex items-center gap-3">
+                  <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-blush text-brand"><i class="h-[17px] w-[17px]" data-lucide="wallet"></i></span>
+                  <h2 id="pay-card-title" class="min-w-0 flex-1 text-base font-semibold leading-6 text-brand-deep">Payment</h2>
+                  <span x-show="pay.settled" class="inline-flex h-7 items-center gap-1.5 rounded-full bg-sage pl-2.5 pr-3 text-xs font-medium text-moss sm:text-[13px]"><i class="h-3 w-3" data-lucide="check-circle-2"></i> Paid</span>
+                  <span x-show="!pay.settled" class="inline-flex h-7 items-center gap-1.5 rounded-full bg-rosebg pl-2.5 pr-3 text-xs font-medium text-wine sm:text-[13px]"><i class="h-3 w-3" data-lucide="circle-dashed"></i> Unpaid</span>
+                </div>
+                <!-- The prominent balance is shown in the order summary above.
+                     Here staff get a compact breakdown without repeating the large pink banner. -->
+                <dl class="mt-3">
+                  <div class="flex items-center justify-between gap-3 border-b border-line py-2.5">
+                    <dt>Total price</dt>
+                    <dd class="font-semibold tabular-nums" :class="pay.total === null ? 'font-normal text-muted' : ''" x-text="pay.total === null ? 'Not recorded' : money(pay.total)"></dd>
+                  </div>
+                  <div class="flex items-center justify-between gap-3 border-b border-line py-2.5">
+                    <dt>Paid so far</dt>
+                    <dd class="font-semibold tabular-nums" :class="pay.paid === null ? 'font-normal text-muted' : 'text-moss'" x-text="pay.paid === null ? (pay.settled ? 'Paid in full' : 'Not recorded') : money(pay.paid)"></dd>
+                  </div>
+                  <div class="flex items-center justify-between gap-3 py-3">
+                    <dt class="font-semibold text-brand-deep">Remaining balance</dt>
+                    <dd class="text-base font-semibold tabular-nums" :class="pay.settled ? 'text-moss' : 'text-wine'" x-text="pay.balance === null ? 'Not recorded' : money(pay.balance)"></dd>
+                  </div>
+                </dl>
+                <div x-show="pay.known" class="mt-1" aria-hidden="true">
+                  <div class="h-2 overflow-hidden rounded-full bg-blush"><div class="h-full rounded-full bg-brand transition-all duration-500" :style="'width:' + pay.percent + '%'"></div></div>
+                </div>
+                <!-- Payment history -->
+                <div x-show="pay.known" class="mt-4 border-t border-line pt-3">
+                  <h3 class="text-xs font-semibold uppercase tracking-wider text-brand-deep">Payments</h3>
+                  <ul class="mt-1.5 text-[13px] sm:text-sm">
+                    <li class="flex items-center justify-between gap-3 py-1.5"><span>Initial payment on record<span class="block text-xs text-muted" x-text="paymentNote({ method: order.payMethod, date: order.paidDate })"></span></span><span class="font-medium tabular-nums" x-text="money(order.paid)"></span></li>
+                    <template x-for="(p, i) in extraPayments" :key="i">
+                      <li class="flex items-center justify-between gap-3 border-t border-line py-1.5"><span><span x-text="'Additional payment #' + (i + 1)"></span><span class="block text-xs text-muted" x-text="paymentNote(p)"></span></span><span class="font-medium tabular-nums text-moss" x-text="'+ ' + money(p.amount)"></span></li>
+                    </template>
+                  </ul>
+                </div>
+                <p x-show="!pay.known && !pay.settled" class="mt-3 rounded-lg bg-canvas px-3 py-2 text-[13px] sm:text-sm">The amount owed isn’t on record. Confirm the balance with the customer before handing over the garment.</p>
+                <p x-show="!pay.known && pay.settled" class="mt-3 rounded-lg bg-canvas px-3 py-2 text-[13px] sm:text-sm">Marked Paid. The total price isn’t recorded for this order.</p>
+                <div class="mt-auto flex flex-col gap-2 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                  <button type="button" @click="openPay()" :disabled="!canRecordPayment"
+                          class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-brand px-4 text-sm font-semibold text-onbrand shadow-sm transition hover:bg-brand-deep focus-visible:ring-2 focus-visible:ring-brand/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-brand">
+                    <i class="h-4 w-4" data-lucide="plus"></i> Record Payment
+                  </button>
+                  <p x-show="!canRecordPayment" class="text-xs text-muted sm:max-w-[60%] sm:text-right" x-text="payBlockedReason"></p>
+                  <button type="button" x-show="canRecordPayment && extraPayments.length > 0" @click="resetPayments()" class="self-start text-xs font-semibold text-brand underline-offset-2 hover:underline">Reset demo payments</button>
+                </div>
+                <button type="button" x-show="!canRecordPayment && extraPayments.length > 0" @click="resetPayments()" class="mt-2 self-start text-xs font-semibold text-brand underline-offset-2 hover:underline">Reset demo payments</button>
+              </section>
+              <div class="grid gap-3 lg:gap-4">
+                <!-- Customer -->
+                <section class="rounded-xl border border-line bg-surface p-4 shadow-card sm:p-5" aria-labelledby="customer-title">
+                  <div class="flex items-center gap-3">
+                    <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-blush text-brand"><i class="h-[17px] w-[17px]" data-lucide="user-round"></i></span>
+                    <h2 id="customer-title" class="min-w-0 flex-1 text-base font-semibold leading-6 text-brand-deep">Customer</h2>
+                    <a x-show="profileCustomer" :href="profileUrl" :aria-label="'View profile of ' + order.customer" class="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg border border-line bg-surface px-3 text-sm font-semibold text-brand transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40">View Profile <i class="h-4 w-4" data-lucide="chevron-right"></i></a>
+                    <a x-show="!profileCustomer" href="customers.html" class="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg border border-line bg-surface px-3 text-sm font-semibold text-brand transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40">All Customers <i class="h-4 w-4" data-lucide="chevron-right"></i></a>
+                  </div>
+                  <dl class="mt-3">
+                    <div class="flex items-center justify-between gap-3 border-b border-line py-2.5">
+                      <dt>Name</dt>
+                      <dd class="text-right font-semibold" x-text="order.customer"></dd>
+                    </div>
+                    <div class="flex items-center justify-between gap-3 py-2.5">
+                      <dt>Mobile</dt>
+                      <dd class="text-right tabular-nums">
+                        <a x-show="order.phone" :href="'tel:' + order.phone" class="inline-flex items-center gap-1.5 font-semibold text-brand underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-brand/40" :aria-label="'Call ' + order.customer + ' at ' + order.phone">
+                          <i class="h-3.5 w-3.5" data-lucide="phone"></i><span x-text="order.phone"></span>
+                        </a>
+                        <span x-show="!order.phone" class="text-muted">Not recorded</span>
+                      </dd>
+                    </div>
+                  </dl>
+                  <p x-show="!profileCustomer" class="mt-1 rounded-lg bg-sand px-3 py-2 text-sm text-ochre">This order is not linked to a customer record yet. Find the customer in the Customers list to open their profile.</p>
+                </section>
+                <!-- Tailor + dates -->
+                <section class="rounded-xl border border-line bg-surface p-4 shadow-card sm:p-5" aria-labelledby="tailor-title">
+                  <div class="flex items-center gap-3">
+                    <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-blush text-brand"><i class="h-[17px] w-[17px]" data-lucide="scissors"></i></span>
+                    <h2 id="tailor-title" class="min-w-0 flex-1 text-base font-semibold leading-6 text-brand-deep">Tailor &amp; Dates</h2>
+
+                  </div>
+                  <dl class="mt-3">
+                    <div class="flex items-center justify-between gap-3 border-b border-line py-2.5">
+                      <dt>Assigned tailor</dt>
+                      <dd class="text-right font-semibold">
+                        <span x-show="order.tailorId" class="inline-flex items-center gap-2">
+                          <span :class="tailorRing" class="grid h-7 w-7 place-items-center rounded-full bg-avatar text-xs font-semibold text-brand ring-1 ring-inset" x-text="tailorName.charAt(0).toUpperCase()"></span>
+                          <span x-text="tailorName"></span>
+                          <span x-show="tailorInactive" class="rounded-full bg-canvas px-2 py-0.5 text-[11px] font-medium text-muted">Inactive</span>
+                        </span>
+                        <span x-show="!order.tailorId" class="font-normal text-muted">Unassigned</span>
+                      </dd>
+                    </div>
+                    <div class="flex items-center justify-between gap-3 border-b border-line py-2.5">
+                      <dt>Order date</dt>
+                      <dd class="text-right" :class="order.orderDate ? 'font-semibold' : 'text-muted'" x-text="order.orderDate ? fmtDate(order.orderDate) : 'Not recorded'"></dd>
+                    </div>
+                    <div class="flex items-center justify-between gap-3 py-2.5">
+                      <dt>Due date</dt>
+                      <dd class="text-right font-semibold" :class="dueState === 'overdue' ? 'text-wine' : (dueState === 'today' ? 'text-brand' : '')" x-text="fmtDate(order.due)"></dd>
+                    </div>
+                  </dl>
+                  <p class="mt-1 text-xs text-muted">Tailor changes will be available during shared-data integration. Dates use the demo reference date, <span x-text="fmtDate(refDate)"></span>.</p>
+                </section>
+              </div>
+              <!-- Measurements -->
+              <section class="rounded-xl border border-line bg-surface p-4 shadow-card sm:p-5" aria-labelledby="measure-title">
+                <div class="flex items-center gap-3">
+                  <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-blush text-brand"><i class="h-[17px] w-[17px]" data-lucide="ruler"></i></span>
+                  <h2 id="measure-title" class="min-w-0 flex-1 text-base font-semibold leading-6 text-brand-deep">Measurements</h2>
+                  <span x-show="measurements.length" class="text-xs text-muted">Inches · saved record</span>
+                </div>
+                <div x-show="measurements.length" class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
+                  <template x-for="m in measurements" :key="m[0]">
+                    <div class="rounded-lg border border-line bg-canvas px-4 py-3">
+                      <p class="text-xs font-medium" x-text="m[0]"></p>
+                      <p class="mt-1 flex items-baseline gap-1.5"><span class="text-2xl font-medium tabular-nums text-brand-deep" x-text="m[1]"></span><span class="text-xs text-muted">in</span></p>
+                    </div>
+                  </template>
+                </div>
+                <div x-show="!measurements.length" class="mt-4 grid place-items-center gap-1 rounded-lg border border-dashed border-stitch px-4 py-8 text-center">
+                  <span class="grid h-9 w-9 place-items-center rounded-full bg-blush text-brand"><i class="h-[18px] w-[18px]" data-lucide="ruler"></i></span>
+                  <p class="mt-1 text-sm font-medium">Measurements not recorded</p>
+                  <p class="text-xs text-muted">No measurements are saved for this order yet.</p>
+                </div>
+              </section>
+              <!-- Pickup notification (demo) -->
+              <section class="rounded-xl border border-line bg-surface p-4 shadow-card sm:p-5" aria-labelledby="notice-title">
+                <div class="flex items-center gap-3">
+                  <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-blush text-brand"><i class="h-[17px] w-[17px]" data-lucide="message-square-text"></i></span>
+                  <h2 id="notice-title" class="min-w-0 flex-1 text-base font-semibold leading-6 text-brand-deep">Pickup Notice Preview</h2>
+                  <span class="inline-flex h-7 items-center rounded-full bg-sand px-2.5 text-xs font-semibold text-ochre">No SMS sent</span>
+                </div>
+                <div class="mt-4 rounded-xl border border-line bg-canvas p-4">
+                  <p class="text-xs font-semibold text-muted" x-text="'To: ' + order.customer + ' · ' + (order.phone || 'Mobile not recorded')"></p>
+                  <p class="mt-2 rounded-2xl rounded-bl-md bg-surface px-3.5 py-2.5 text-sm leading-relaxed shadow-sm ring-1 ring-line" x-text="noticeText"></p>
+                </div>
+                <p class="mt-3 flex items-start gap-2 text-[13px] sm:text-sm" aria-live="polite">
+                  <i class="mt-0.5 h-4 w-4 shrink-0 text-brand" data-lucide="info"></i>
+                  <span x-text="noticeStatus"></span>
+                </p>
+                <button type="button" x-show="stage === 'ready'" @click="simulateNotice()" :disabled="!order.phone"
+                        class="mt-3 inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 text-sm font-medium text-brand shadow-sm transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface">
+                  <i class="h-4 w-4" data-lucide="bell"></i> Simulate notice (demo)
+                </button>
+              </section>
+            </div>
+            <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+              <span>Demo page: stage changes and payments are saved in this browser only and are shared with Orders and the Production Kanban.</span>
+              <span class="font-semibold text-wine" x-show="storageFailed">Browser storage is unavailable, so changes will reset on refresh.</span>
+            </p>
+            <!-- Record payment modal -->
+            <div class="fixed inset-0 z-50 flex items-end justify-center bg-ink/50 p-0 backdrop-blur-sm sm:items-center sm:p-4" x-cloak x-show="payOpen"
+                 @click.self="closePay()" @keydown.escape.window="payOpen && closePay()">
+              <div class="max-h-full w-full max-w-md overflow-y-auto rounded-t-2xl border border-line bg-surface p-5 shadow-xl sm:rounded-2xl sm:p-6" role="dialog" aria-modal="true" aria-labelledby="pay-title">
+                <form @submit.prevent="submitPayment()" novalidate class="space-y-4">
+                  <div class="flex items-center justify-between border-b border-line pb-3">
+                    <h3 id="pay-title" class="text-lg font-semibold leading-7 text-brand-deep">Record Payment</h3>
+                    <button type="button" @click="closePay()" class="text-muted hover:text-ink" aria-label="Close"><i class="h-5 w-5" data-lucide="x"></i></button>
+                  </div>
+                  <dl class="space-y-1.5 rounded-lg bg-canvas p-3 text-sm">
+                    <div class="flex justify-between gap-3"><dt>Order</dt><dd class="font-semibold tabular-nums" x-text="order.id + ' · ' + order.customer"></dd></div>
+                    <div class="flex justify-between gap-3"><dt>Paid so far</dt><dd class="font-semibold tabular-nums" x-text="pay.paid === null ? '' : money(pay.paid)"></dd></div>
+                    <div class="flex justify-between gap-3 border-t border-line pt-1.5"><dt>Outstanding balance</dt><dd class="font-semibold tabular-nums text-wine" x-text="pay.balance === null ? '' : money(pay.balance)"></dd></div>
+                  </dl>
+                  <div>
+                    <label for="pay-amount" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-brand-deep">Amount received (PHP)</label>
+                    <div class="flex gap-2">
+                      <input id="pay-amount" x-ref="payInput" x-model="payAmount" @input="payError = ''" type="number" inputmode="decimal" step="0.01" min="0.01" autocomplete="off" placeholder="0.00"
+                             :aria-invalid="payError ? 'true' : 'false'" aria-describedby="pay-hint pay-error"
+                             class="h-11 min-w-0 flex-1 rounded-lg border bg-surface px-3.5 text-sm tabular-nums focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                             :class="payError ? 'border-wine' : 'border-line'"/>
+                      <button type="button" @click="payFull()" class="h-11 shrink-0 rounded-lg border border-line px-3 text-sm font-medium text-brand transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40">Pay full balance</button>
+                    </div>
+                    <p id="pay-hint" class="mt-1.5 text-xs text-muted" x-text="'Up to ' + (pay.balance === null ? '' : money(pay.balance)) + ' (the outstanding balance).'"></p>
+                    <p id="pay-error" class="mt-1 text-xs font-semibold text-wine" role="alert" x-show="payError" x-text="payError"></p>
+                  </div>
+                  <div>
+                    <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-brand-deep" id="pay-method-label">Payment Method</span>
+                    <div aria-labelledby="pay-method-label" class="grid grid-cols-2 gap-1 rounded-lg bg-blush p-1" role="radiogroup">
+                      <template x-for="opt in payMethods" :key="opt">
+                        <button type="button" role="radio" @click="payMethod = opt" :aria-checked="payMethod === opt"
+                                :class="payMethod === opt ? 'bg-surface text-brand-deep shadow-sm ring-1 ring-line' : 'text-muted hover:text-ink'"
+                                class="flex h-10 items-center justify-center rounded-md text-sm font-medium transition focus-visible:ring-2 focus-visible:ring-brand/40" x-text="opt"></button>
+                      </template>
+                    </div>
+                  </div>
+                  <p x-show="newBalance !== null" class="rounded-lg bg-sage px-3 py-2 text-sm text-moss">Balance after this payment: <span class="font-semibold tabular-nums" x-text="newBalance === null ? '' : money(newBalance)"></span></p>
+                  <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <button type="button" @click="closePay()" class="h-10 rounded-lg border border-line px-4 text-sm font-medium text-brand transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40">Cancel</button>
+                    <button type="submit" class="h-10 rounded-lg bg-brand px-4 text-sm font-semibold text-onbrand transition hover:bg-brand-deep focus-visible:ring-2 focus-visible:ring-brand/40">Save Payment</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+            <!-- Claim confirmation: shown when an order with an unpaid or unknown balance is moved to Claimed -->
+            <div class="fixed inset-0 z-50 flex items-end justify-center bg-ink/50 p-0 backdrop-blur-sm sm:items-center sm:p-4" x-cloak x-show="claimOpen"
+                 @click.self="cancelClaim()" @keydown.escape.window="claimOpen && cancelClaim()"
+                 x-effect="if (claimOpen) $nextTick(() => $refs.claimCancel && $refs.claimCancel.focus())">
+              <div class="max-h-full w-full max-w-md space-y-4 overflow-y-auto rounded-t-2xl border border-line bg-surface p-5 shadow-xl sm:rounded-2xl sm:p-6"
+                   role="alertdialog" aria-modal="true" aria-labelledby="claim-title" aria-describedby="claim-desc">
+                <div class="flex items-start gap-3">
+                  <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-rosebg text-wine"><i class="h-5 w-5" data-lucide="alert-triangle"></i></span>
+                  <div class="min-w-0">
+                    <h3 id="claim-title" class="text-lg font-semibold leading-7 text-brand-deep" x-text="pay.known ? 'Unpaid balance' : 'Balance not confirmed'"></h3>
+                    <p id="claim-desc" class="mt-1 text-sm" x-text="claimMessage"></p>
+                  </div>
+                </div>
+                <dl class="space-y-1.5 rounded-lg bg-canvas p-3 text-sm">
+                  <div class="flex justify-between gap-3"><dt>Order</dt><dd class="font-semibold tabular-nums" x-text="order.id"></dd></div>
+                  <div class="flex justify-between gap-3"><dt>Customer</dt><dd class="text-right font-semibold" x-text="order.customer"></dd></div>
+                  <div class="flex justify-between gap-3 border-t border-line pt-1.5"><dt>Outstanding balance</dt><dd class="font-semibold text-wine" x-text="pay.balance === null ? 'Unknown' : money(pay.balance)"></dd></div>
+                </dl>
+                <p class="text-xs text-muted">Claiming does not record a payment or change the balance.</p>
+                <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <button type="button" x-ref="claimCancel" @click="cancelClaim()" class="h-10 rounded-lg border border-line px-4 text-sm font-medium text-brand transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40">Cancel</button>
+                  <button type="button" x-show="canRecordPayment" @click="claimOpen = false; openPay()" class="h-10 rounded-lg border border-line px-4 text-sm font-medium text-brand transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40">Record payment first</button>
+                  <button type="button" @click="confirmClaim()" class="h-10 rounded-lg bg-brand px-4 text-sm font-semibold text-onbrand transition hover:bg-brand-deep focus-visible:ring-2 focus-visible:ring-brand/40">Claim anyway</button>
+                </div>
+              </div>
+            </div>
+            <!-- Feedback toast (with Undo for stage changes) -->
+            <div class="pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex justify-center px-4" role="status" aria-live="polite">
+              <div x-cloak x-show="toast.show" x-transition.opacity class="pointer-events-auto flex max-w-md items-center gap-3 rounded-xl bg-brand-deep py-2.5 pl-4 pr-2.5 text-sm text-onbrand shadow-xl">
+                <span class="shrink-0" x-show="toast.kind === 'success'"><i class="h-4 w-4" data-lucide="check-circle-2"></i></span>
+                <span class="shrink-0" x-show="toast.kind === 'info'"><i class="h-4 w-4" data-lucide="info"></i></span>
+                <span class="min-w-0 flex-1" x-text="toast.message"></span>
+                <button type="button" x-show="toast.undo" @click="undoMove()" class="shrink-0 rounded-lg px-2.5 py-1 text-sm font-semibold underline-offset-2 hover:bg-white/10 hover:underline focus-visible:ring-2 focus-visible:ring-onbrand/60">Undo</button>
+                <button type="button" @click="hideToast()" aria-label="Dismiss message" class="grid h-7 w-7 shrink-0 place-items-center rounded-lg hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-onbrand/60"><i class="h-4 w-4" data-lucide="x"></i></button>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </main>
+  </div>
+</div>
+<script>
+  /* ------------------------------------------------------------------
+     ORDER DETAILS (demo)
+     The order is chosen with a URL query: order-detail.html?id=ORD%201041
+       - no id      -> "Choose an order" list
+       - unknown id -> "Order not found"
+     Data rules
+     - Orders are NOT stored on this page. They come from the shared order
+       records in app.js (tahianGetOrder / tahianGetOrders), the same ones used
+       by orders.html and production-kanban.html.
+     - Only ORD 1043 has more detail on record (mobile, order date,
+       measurements, PHP 2,800 total, PHP 1,500 paid). Everything else is
+       null and shown as "Not recorded". Nothing here is invented.
+     - Tailors are stored as IDs and looked up with tahianGetTailors() (app.js).
+     Saving
+     - Stage changes use tahianSetOrderStage(); payments use
+       tahianAddOrderPayment() / tahianClearOrderPayments(). Each one changes
+       only this order's record, so the Kanban and Orders pages show it too.
+     - The order is re-read before every change and whenever the page is shown
+       again, so this page never works from an old copy.
+     ------------------------------------------------------------------ */
+  // Fixed reference date for the October 2026 demo orders (not the live calendar).
+  const OD_TODAY = TAHIAN_DEMO_TODAY;
+  const OD_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  // Exactly three stages, in this order.
+  const OD_STAGES = [
+    { key: 'in_progress', label: 'In Progress', icon: 'clock', action: 'Mark ready for pickup', hint: 'The garment is being made by the tailor.' },
+    { key: 'ready', label: 'Ready for Pickup', icon: 'package-check', action: 'Mark claimed', hint: 'Finished and waiting for the customer.' },
+    { key: 'claimed', label: 'Claimed', icon: 'circle-check-big', action: '', hint: 'Collected by the customer.' }
+  ];
+  const OD_STAGE_KEYS = OD_STAGES.map((stage) => stage.key);
+  const OD_TAILOR_RINGS = { 'T-0001': 'ring-sky-200', 'T-0002': 'ring-violet-200' };
+  function odRound(amount) { return Math.round(amount * 100) / 100; }
+  function orderDetailPage() {
+    return {
+      view: 'loading', // 'loading' | 'select' | 'missing' | 'order'
+      requestedId: '',
+      order: null,
+      profileCustomer: null, // the customer record this order reliably belongs to, or null
+      allOrders: [],
+      stages: OD_STAGES,
+      stage: 'in_progress',
+      tailors: [],
+      refDate: OD_TODAY,
+      storageFailed: false,
+      payOpen: false,
+      payAmount: '',
+      payMethod: 'Cash',
+      payMethods: ['Cash', 'GCash'],
+      payError: '',
+      claimOpen: false,
+      simulated: false,
+      toast: { show: false, message: '', kind: 'success', undo: null },
+      toastTimer: null,
+      // Called by app.js after login (only when the page is not redirecting).
+      pageInit() {
+        this.tailors = typeof tahianGetTailors === 'function' ? tahianGetTailors() : [];
+        this.allOrders = tahianGetOrders();
+        const raw = new URLSearchParams(window.location.search).get('id');
+        if (raw === null || raw.trim() === '') {
+          this.view = 'select';
+          document.title = 'TahiAN | Choose an Order';
+          return;
+        }
+        this.requestedId = raw.trim();
+        const found = tahianGetOrder(raw);
+        if (!found) {
+          this.view = 'missing';
+          document.title = 'TahiAN | Order Not Found';
+          return;
+        }
+        this.order = found;
+        this.stage = found.stage;
+        this.linkCustomer();
+        this.view = 'order';
+        document.title = 'TahiAN | ' + found.id;
+      },
+      detailUrl(item) { return tahianOrderDetailUrl(item); },
+      /* ---------- shared data ---------- */
+      // Extra demo payments recorded on this order (part of the shared order record).
+      get extraPayments() { return this.order ? this.order.payments : []; },
+      // Re-read this order from the shared data (Back button, another tab, before a change).
+      // If the browser could not save, keep what is on screen instead.
+      refresh() {
+        if (this.view !== 'order' || !this.order || this.storageFailed) return;
+        const latest = tahianGetOrder(this.order.id);
+        if (!latest) return;
+        this.order = latest;
+        this.stage = latest.stage;
+        this.linkCustomer();
+      },
+      // Same matching rule as Customers and Customer Profile (app.js): the saved customer ID,
+      // or, for older orders, a unique name with a matching or missing mobile. Never a guess.
+      linkCustomer() {
+        this.profileCustomer = this.order ? tahianFindCustomerForOrder(tahianGetCustomers(), this.order) : null;
+      },
+      get profileUrl() { return this.profileCustomer ? tahianCustomerProfileUrl(this.profileCustomer) : 'customers.html'; },
+      /* ---------- formatting ---------- */
+      money(amount) {
+        const n = Number(amount);
+        return 'PHP ' + n.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 });
+      },
+      fmtDate(iso) {
+        const parts = String(iso).split('-');
+        return OD_MONTHS[Number(parts[1]) - 1] + ' ' + Number(parts[2]) + ', ' + parts[0];
+      },
+      /* ---------- tailor ---------- */
+      get tailorRecord() { return this.tailors.find((tailor) => tailor.id === this.order.tailorId) || null; },
+      get tailorName() { return this.tailorRecord ? this.tailorRecord.name : 'Unknown tailor'; },
+      get tailorInactive() { return !!this.tailorRecord && this.tailorRecord.status === 'Inactive'; },
+      get tailorRing() { return OD_TAILOR_RINGS[this.order.tailorId] || 'ring-line'; },
+      /* ---------- measurements ---------- */
+      get measurements() { return this.order ? this.order.measurements : []; },
+      /* ---------- due dates (same rules as orders.html and the Kanban) ---------- */
+      get daysLate() { return Math.round((new Date(OD_TODAY) - new Date(this.order.due)) / 86400000); },
+      get dueState() {
+        if (this.stage === 'claimed') return 'done';
+        const days = this.daysLate;
+        return days > 0 ? 'overdue' : (days === 0 ? 'today' : 'upcoming');
+      },
+      get dueBadge() {
+        const days = Math.abs(this.daysLate);
+        const plural = days === 1 ? ' day' : ' days';
+        if (this.dueState === 'overdue') return { text: days + plural + ' overdue', cls: 'bg-rosebg text-wine' };
+        if (this.dueState === 'today') return { text: 'Due today', cls: 'bg-blush text-brand-deep' };
+        if (this.dueState === 'upcoming') return { text: 'Due in ' + days + plural, cls: 'bg-blush text-brand-deep' };
+        return { text: 'Due ' + this.fmtDate(this.order.due), cls: 'bg-canvas text-muted' };
+      },
+      /* ---------- payment ---------- */
+      // known: total and paid are on record. settled: nothing left to collect.
+      // balance is null when the amount owed is not on record.
+      get pay() { return tahianOrderPayment(this.order); },
+      // "Cash · Oct 28, 2026". Missing information is stated, never guessed.
+      paymentNote(p) {
+        return (p.method || 'Method not recorded') + ' · ' + (p.date ? this.fmtDate(p.date) : 'Date not recorded');
+      },
+      get canRecordPayment() { return this.pay.known && this.pay.balance > 0; },
+      get payBlockedReason() {
+        if (this.pay.known) return 'Paid in full. There is no balance left to record.';
+        if (this.pay.settled) return 'This order is already marked Paid.';
+        return 'The total price isn’t on record, so a payment can’t be checked against the balance.';
+      },
+      get balanceWarning() {
+        const claimed = this.stage === 'claimed';
+        if (this.pay.balance === null) {
+          return claimed
+            ? 'This order was claimed, but the amount owed isn’t on record. Confirm payment with the customer.'
+            : 'The amount owed isn’t on record. Confirm payment with the customer before handing over the garment.';
+        }
+        return claimed
+          ? 'This order was claimed with ' + this.money(this.pay.balance) + ' still unpaid.'
+          : this.money(this.pay.balance) + ' is still unpaid. Collect it before handing over the garment.';
+      },
+      get newBalance() {
+        const amount = Number(this.payAmount);
+        if (String(this.payAmount).trim() === '' || !isFinite(amount) || amount <= 0 || amount > this.pay.balance) return null;
+        return odRound(this.pay.balance - amount);
+      },
+      openPay() {
+        this.refresh();
+        if (!this.canRecordPayment) return;
+        this.payAmount = '';
+        this.payMethod = 'Cash';
+        this.payError = '';
+        this.payOpen = true;
+        this.$nextTick(() => { if (this.$refs.payInput) this.$refs.payInput.focus(); });
+      },
+      closePay() { this.payOpen = false; },
+      payFull() {
+        this.payAmount = String(this.pay.balance);
+        this.payError = '';
+      },
+      submitPayment() {
+        this.refresh();
+        const raw = String(this.payAmount).trim();
+        const amount = Number(raw);
+        if (raw === '' || !isFinite(amount)) { this.payError = 'Enter the amount received.'; return; }
+        if (amount <= 0) { this.payError = 'The amount must be more than PHP 0.'; return; }
+        if (Math.abs(amount * 100 - Math.round(amount * 100)) > 1e-6) { this.payError = 'Use at most 2 decimal places.'; return; }
+        if (amount > this.pay.balance) { this.payError = 'The payment can’t be more than the balance of ' + this.money(this.pay.balance) + '.'; return; }
+        const saved = tahianAddOrderPayment(this.order.id, odRound(amount), this.payMethod);
+        if (!saved) { this.payError = 'This order could not be found in the saved data.'; return; }
+        this.storageFailed = !saved.saved;
+        this.order.payments.push({ amount: odRound(amount), date: tahianBusinessDate(), method: this.payMethod });
+        this.payOpen = false;
+        this.showToast(this.money(amount) + ' recorded (' + this.payMethod + '). ' + (this.pay.settled ? 'This order is now fully paid.' : 'Balance is now ' + this.money(this.pay.balance) + '.'), 'success');
+      },
+      resetPayments() {
+        this.refresh();
+        const saved = tahianClearOrderPayments(this.order.id);
+        if (saved) this.storageFailed = !saved.saved;
+        this.order.payments = [];
+        this.showToast('Demo payments reset to the amount on record.', 'info');
+      },
+      /* ---------- production stage ---------- */
+      get stageIndex() { return OD_STAGE_KEYS.indexOf(this.stage); },
+      get nextStage() { return this.stages[this.stageIndex + 1] || null; },
+      get prevStage() { return this.stages[this.stageIndex - 1] || null; },
+      get stageHint() { return this.stages[this.stageIndex].hint; },
+      // The button names the move to the NEXT stage: In Progress -> "Mark ready for pickup", Ready -> "Mark claimed".
+      get moveLabel() { return this.stages[this.stageIndex].action; },
+      stageLabel(key) {
+        const found = this.stages.find((item) => item.key === key);
+        return found ? found.label : '';
+      },
+      stepState(i) {
+        if (i < this.stageIndex) return 'done';
+        if (i === this.stageIndex) return i === this.stages.length - 1 ? 'done' : 'current';
+        return 'upcoming';
+      },
+      stepClass(i) {
+        return this.stepState(i) === 'upcoming' ? 'border border-stitch bg-surface text-muted' : 'bg-brand text-onbrand';
+      },
+      tileClass(i) {
+        if (i === this.stageIndex) return 'border-brand bg-blush/60';
+        return i < this.stageIndex ? 'border-line bg-surface' : 'border-dashed border-stitch bg-surface';
+      },
+      // One stage at a time, never skipping. Claiming with a balance asks first.
+      requestMove(key) {
+        this.refresh();
+        const to = OD_STAGE_KEYS.indexOf(key);
+        if (key === this.stage || Math.abs(to - this.stageIndex) !== 1) return;
+        if (key === 'claimed' && !this.pay.settled) {
+          this.claimOpen = true;
+          return;
+        }
+        this.applyMove(key);
+      },
+      applyMove(key, isUndo) {
+        const from = this.stage;
+        const saved = tahianSetOrderStage(this.order.id, key); // never changes the payment
+        if (!saved) {
+          this.showToast('This order could not be found in the saved data.', 'info');
+          return;
+        }
+        this.storageFailed = !saved.saved;
+        this.stage = key;
+        this.order.stage = key;
+        this.simulated = false;
+        this.showToast(this.order.id + (isUndo ? ' moved back to ' : ' moved to ') + this.stageLabel(key) + '.', 'success', isUndo ? null : { from: from });
+      },
+      undoMove() {
+        const undo = this.toast.undo;
+        if (undo) this.applyMove(undo.from, true);
+      },
+      get claimMessage() {
+        if (this.pay.known) return 'This order still has an unpaid balance. Check payment with the customer before handing over the garment.';
+        return 'This order is marked unpaid, but the amount owed isn’t on record. Confirm the balance with the customer before handing over the garment.';
+      },
+      confirmClaim() {
+        this.claimOpen = false;
+        this.applyMove('claimed'); // never changes the payment
+      },
+      cancelClaim() { this.claimOpen = false; },
+      /* ---------- pickup notice: simulated only, no SMS is ever sent ---------- */
+      get noticeText() { return 'Hi, ' + this.order.greet + '! Your ' + this.order.garment + ' is ready for pickup.'; },
+      get noticeStatus() {
+        if (this.stage === 'in_progress') return 'Not sent. This is a preview of the message for when the order is marked Ready for Pickup.';
+        if (this.stage === 'claimed') return 'No notice needed. The order has already been claimed.';
+        if (!this.order.phone) return 'Can’t simulate: no mobile number is recorded for this customer.';
+        return this.simulated ? 'Demo simulation only: no SMS was sent.' : 'The order is ready. Simulate the notice to preview the flow. No SMS will be sent.';
+      },
+      simulateNotice() {
+        if (!this.order.phone) return;
+        this.simulated = true;
+        this.showToast('Demo only: no SMS was sent to ' + this.order.customer + '.', 'info');
+      },
+      /* ---------- feedback toast ---------- */
+      showToast(message, kind, undo) {
+        this.toast = { show: true, message: message, kind: kind || 'success', undo: undo || null };
+        clearTimeout(this.toastTimer);
+        this.toastTimer = setTimeout(() => this.hideToast(), 6000);
+      },
+      hideToast() {
+        this.toast.show = false;
+        this.toast.undo = null;
+      }
+    };
+  }
+</script>
+<script>
+  lucide.createIcons();
+  document.addEventListener('alpine:initialized', () => {
+    Alpine.effect(() => { lucide.createIcons(); });
+  });
+</script>
+<!-- print job slip: filled from the selected order, so it always matches the page -->
+<div class="hidden print:block" id="print-job-slip">
+  <template x-if="view === 'order'">
+    <div>
+      <div class="text-center border-b border-dashed border-black pb-3">
+        <h1 class="text-xl font-bold tracking-tight">TahiAN</h1>
+        <p class="font-semibold">Morsons HOME Industries</p>
+        <p>Poblacion, Iligan City</p>
+        <p class="mt-2 text-sm font-bold uppercase tracking-widest">Job Slip</p>
+      </div>
+      <div class="py-3 border-b border-dashed border-black">
+        <p class="text-center text-lg font-bold" x-text="order.id"></p>
+        <dl class="mt-2 space-y-1">
+          <div class="flex justify-between gap-3"><dt>Garment</dt><dd class="font-semibold text-right" x-text="order.garment"></dd></div>
+          <div class="flex justify-between gap-3"><dt>Order date</dt><dd class="text-right" x-text="order.orderDate ? fmtDate(order.orderDate) : 'Not recorded'"></dd></div>
+          <div class="flex justify-between gap-3"><dt>Due date</dt><dd class="font-semibold text-right" x-text="fmtDate(order.due)"></dd></div>
+        </dl>
+      </div>
+      <div class="py-3 border-b border-dashed border-black">
+        <h2 class="mb-2 font-bold uppercase">Customer &amp; Assignment</h2>
+        <dl class="space-y-1">
+          <div class="flex justify-between gap-3"><dt>Customer</dt><dd class="font-semibold text-right" x-text="order.customer"></dd></div>
+          <div class="flex justify-between gap-3"><dt>Mobile</dt><dd class="text-right" x-text="order.phone || 'Not recorded'"></dd></div>
+          <div class="flex justify-between gap-3"><dt>Assigned tailor</dt><dd class="font-semibold text-right" x-text="order.tailorId ? tailorName : 'Unassigned'"></dd></div>
+        </dl>
+      </div>
+      <div class="py-3 border-b border-dashed border-black">
+        <h2 class="mb-2 font-bold uppercase">Measurements — Inches</h2>
+        <p x-show="!measurements.length">Not recorded</p>
+        <dl x-show="measurements.length" class="grid grid-cols-2 gap-x-6 gap-y-1">
+          <template x-for="m in measurements" :key="m[0]">
+            <div class="flex justify-between gap-3"><dt x-text="m[0]"></dt><dd class="font-semibold" x-text="m[1]"></dd></div>
+          </template>
+        </dl>
+      </div>
+      <div class="py-3 border-b border-dashed border-black">
+        <h2 class="mb-2 font-bold uppercase">Payment</h2>
+        <dl class="space-y-1">
+          <div class="flex justify-between gap-3"><dt>Total</dt><dd x-text="pay.total === null ? 'Not recorded' : money(pay.total)"></dd></div>
+          <div class="flex justify-between gap-3"><dt>Amount paid</dt><dd x-text="pay.paid === null ? (pay.settled ? 'Paid in full' : 'Not recorded') : money(pay.paid)"></dd></div>
+          <div class="flex justify-between gap-3 pt-1 font-bold"><dt>Balance</dt><dd x-text="pay.balance === null ? 'Not recorded' : money(pay.balance)"></dd></div>
+        </dl>
+      </div>
+      <div class="py-3 border-b border-dashed border-black">
+        <h2 class="font-bold uppercase">Tailoring Notes</h2>
+        <div class="h-6 border-b border-black"></div>
+        <div class="h-6 border-b border-black"></div>
+      </div>
+      <div class="pt-3 text-center">
+        <img alt="QR code placeholder — not scannable" class="block mx-auto w-20 h-20" height="80" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect x='1' y='1' width='98' height='98' fill='white' stroke='black' stroke-dasharray='4 3'/%3E%3Ctext x='50' y='46' text-anchor='middle' font-family='Arial' font-size='18'%3EQR%3C/text%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-size='10'%3EPLACEHOLDER%3C/text%3E%3C/svg%3E" width="80"/>
+        <p class="mt-1 text-[9px]">QR placeholder — not scannable</p>
+        <p class="mt-3">Please present this slip when collecting your order.</p>
+        <p class="mt-1 font-semibold">Thank you!</p>
+      </div>
+    </div>
+  </template>
+</div>
+</body>
+</html>

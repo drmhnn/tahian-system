@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>TahiAN | Kanban</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // TahiAN design tokens for Tailwind (inline config, no extra files)
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              canvas: '#F7F3EF', sidebar: '#FCFAF7', surface: '#FFFDFA',
+              brand: { DEFAULT: '#733E50', deep: '#542B3A' },
+              onbrand: '#FFFAF3', onbrandmuted: '#EBD8DF',
+              ink: '#34232B', muted: '#807279', line: '#E8DEDA', stitch: '#CBB7B7',
+              blush: '#F1E6E6', rosebg: '#F7E6E8', wine: '#933D50', moss: '#365C46',
+              sage: '#EDF3EC', sand: '#FBF0DF', ochre: '#845927', avatar: '#EEE5DC'
+            },
+            fontFamily: {
+              sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+              display: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+              logo: ['"Bricolage Grotesque"', 'Inter', 'sans-serif']
+            },
+            boxShadow: { card: '0 2px 12px rgba(54,26,36,.05)' }
+          }
+        }
+      };
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500&family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="styles.css" rel="stylesheet"/>
+    <script src="app.js"></script>
+  </head>
+  <body class="flex h-[100dvh] overflow-hidden bg-canvas font-sans text-sm text-ink antialiased sm:text-[15px]" x-data="tahianApp('kanban', null, { requireLogin: true })">
+
+    <!-- APP SHELL: sidebar (drawer below lg) + workspace -->
+    <div class="flex min-w-0 flex-1 print:hidden" x-cloak x-show="loggedIn" x-data="{ menu: false }" @keydown.escape.window="menu = false">
+
+      <!-- SIDEBAR: one shared definition in app.js (TAHIAN_NAV_ITEMS) -->
+      <tahian-sidebar></tahian-sidebar>
+
+      <!-- MAIN WORKSPACE -->
+      <div class="flex min-w-0 flex-1 flex-col overflow-y-auto">
+        <header class="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 border-b border-line bg-sidebar px-4 sm:gap-3 sm:px-6 lg:h-[88px] lg:px-8">
+          <button type="button" @click="menu = true" class="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-line bg-surface text-brand transition hover:bg-blush lg:hidden" aria-label="Open menu" aria-controls="sidebar" :aria-expanded="menu">
+            <i class="h-5 w-5" data-lucide="menu"></i>
+          </button>
+          <label class="relative min-w-0 max-w-md flex-1">
+            <i class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" data-lucide="search"></i>
+            <input class="h-10 w-full rounded-lg border border-line bg-canvas pl-9 pr-3 text-sm text-ink placeholder:text-ink/70 focus:outline-none focus:ring-2 focus:ring-brand/40" type="text" placeholder="Client, order, or Fabric ID" aria-label="Search clients, orders, or fabric IDs"/>
+          </label>
+          <div class="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+            <div class="hidden text-sm leading-tight sm:block">
+              <div class="font-semibold" x-text="userName || 'Guest'">Guest</div>
+              <div class="text-xs" x-text="userRole || 'Not signed in'">Not signed in</div>
+            </div>
+            <div class="grid h-9 w-9 place-items-center rounded-full bg-blush text-brand"><i class="h-4 w-4" data-lucide="user"></i></div>
+            <button type="button" @click="logout()" aria-label="Log out" class="inline-flex h-10 items-center gap-2 rounded-lg border border-line bg-surface px-2.5 text-sm font-medium text-brand shadow-sm transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40 sm:px-3.5">
+              <i class="h-4 w-4" data-lucide="log-out"></i><span class="hidden sm:inline">Log out</span>
+            </button>
+          </div>
+        </header>
+
+        <main class="mx-auto w-full max-w-[1500px] px-4 pb-8 pt-5 sm:px-6 lg:px-8 lg:pt-6">
+
+          <!-- SCREEN: Production Kanban
+                All board data and behaviour live in kanbanBoard() (script at the bottom of this file). -->
+          <div x-cloak x-data="kanbanBoard()" x-show="currentTab === 'kanban'" @keydown.escape.window="claimConfirm && cancelClaim()" @pageshow.window="reload()" @storage.window="reload()" class="space-y-3 lg:space-y-4">
+
+            <!-- Page header -->
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p class="text-xs font-medium sm:text-sm">Production / Board</p>
+                <h1 class="mt-0.5 font-display text-3xl font-semibold leading-tight text-brand-deep sm:text-4xl">Production Kanban</h1>
+                <div class="mt-1.5 h-0.5 w-40 bg-[repeating-linear-gradient(90deg,#D4B0BC_0_6px,transparent_6px_10px)]"></div>
+                <p class="mt-2 max-w-xl text-[13px] sm:text-sm">Follow every order from the sewing table to pickup. Drag a card to a new stage, or use the button on the card.</p>
+              </div>
+              <div class="flex items-center gap-2 self-start sm:self-auto">
+                <button type="button" @click="currentTab = 'create_order'" class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-brand px-3.5 text-sm font-semibold text-onbrand shadow-sm transition hover:bg-brand-deep focus-visible:ring-2 focus-visible:ring-brand/40 sm:px-5">
+                  <i class="h-4 w-4" data-lucide="plus"></i> New Order
+                </button>
+              </div>
+            </div>
+
+            <!-- Search and tailor filter -->
+            <section class="rounded-xl border border-line bg-surface p-2.5 shadow-card sm:px-3 sm:py-2.5" aria-label="Find and filter orders">
+              <div class="flex flex-col gap-2 xl:flex-row xl:items-center xl:gap-3">
+                <div class="relative min-w-0 xl:w-[30%] xl:shrink-0">
+                  <i class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand" data-lucide="search"></i>
+                  <input type="search" x-model.debounce.150ms="q" @keydown.escape="q = ''" autocomplete="off"
+                          placeholder="Search by order ID or customer name" aria-label="Search the board by order ID or customer name"
+                          class="h-10 w-full rounded-lg border border-line bg-surface pl-9 pr-9 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 [&::-webkit-search-cancel-button]:appearance-none"/>
+                  <button type="button" x-show="q" x-cloak @click="q = ''" aria-label="Clear search" class="absolute right-2 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded text-muted hover:text-ink">
+                    <i class="h-4 w-4" data-lucide="x"></i>
+                  </button>
+                </div>
+                <div class="flex max-w-full min-w-0 gap-1 self-start overflow-x-auto rounded-lg bg-canvas p-0.5 xl:self-auto" role="group" aria-label="Filter by tailor">
+                  <button type="button" @click="tailorFilter = 'All'" :aria-pressed="tailorFilter === 'All'"
+                          class="h-9 shrink-0 whitespace-nowrap rounded-lg px-3 text-sm transition sm:px-4"
+                          :class="filterClass('All')">All tailors</button>
+                  <template x-for="t in tailorOptions" :key="t.id">
+                    <button type="button" @click="tailorFilter = t.id" :aria-pressed="tailorFilter === t.id"
+                            class="inline-flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 text-sm transition sm:px-3.5"
+                            :class="filterClass(t.id)">
+                      <span :class="tailorRing(t.id)" class="grid h-5 w-5 place-items-center rounded-full bg-avatar text-[10px] font-semibold text-brand ring-1 ring-inset" x-text="t.name.charAt(0).toUpperCase()"></span>
+                      <span x-text="t.name"></span>
+                    </button>
+                  </template>
+                  <button type="button" @click="tailorFilter = 'Unassigned'" :aria-pressed="tailorFilter === 'Unassigned'"
+                          class="inline-flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 text-sm transition sm:px-3.5"
+                          :class="filterClass('Unassigned')">
+                    <i class="h-3.5 w-3.5" data-lucide="user-x"></i> Unassigned
+                  </button>
+                </div>
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-0.5 text-xs text-muted xl:ml-auto xl:shrink-0" aria-live="polite">
+                  <span><span class="font-semibold tabular-nums text-ink" x-text="visibleOrders.length"></span> of <span class="tabular-nums" x-text="orders.length"></span> orders</span>
+                  <span class="font-semibold text-wine" x-show="overdueCount > 0" x-text="overdueCount + ' overdue'"></span>
+                  <span class="font-semibold text-brand" x-show="todayCount > 0" x-text="todayCount + ' due today'"></span>
+                  <button type="button" x-show="filtersActive" @click="resetFilters()" class="font-semibold text-brand underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-brand/40">Clear</button>
+                </div>
+              </div>
+            </section>
+
+            <!-- Board: three columns from xl, horizontal swipe below that.
+                  x-effect redraws Lucide icons whenever cards are re-rendered. -->
+            <div class="-mx-4 flex snap-x snap-proximity gap-4 overflow-x-auto px-4 pb-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:mx-0 xl:grid xl:grid-cols-3 xl:gap-5 xl:overflow-visible xl:px-0 xl:pb-0"
+                  x-effect="columns; $nextTick(() => window.lucide && lucide.createIcons())">
+              <template x-for="col in columns" :key="col.key">
+                <section class="flex w-[86%] shrink-0 snap-start flex-col rounded-xl border bg-[#F3EEEB] transition sm:w-80 xl:w-auto"
+                          :class="columnClass(col)" :aria-labelledby="'kanban-col-' + col.key"
+                          @dragover="onDragOver($event, col.key)" @dragleave="onDragLeave($event)" @drop.prevent="onDrop(col.key)">
+
+                  <!-- Column header -->
+                  <header class="flex items-center gap-3 p-3.5 pb-2.5 sm:p-4 sm:pb-3">
+                    <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl" :class="col.tone"><i class="h-[17px] w-[17px]" :data-lucide="col.icon"></i></span>
+                    <div class="min-w-0 flex-1">
+                      <h2 :id="'kanban-col-' + col.key" class="text-[17px] font-semibold leading-6 text-brand-deep" x-text="col.label"></h2>
+                      <p class="truncate text-[13px]" x-text="col.hint"></p>
+                    </div>
+                    <span class="inline-flex h-7 min-w-[1.75rem] items-center justify-center rounded-full border border-line bg-surface px-2 text-sm font-semibold tabular-nums text-brand-deep"
+                          :aria-label="col.orders.length + ' orders'" x-text="countText(col)"></span>
+                  </header>
+
+                  <div class="flex flex-1 flex-col p-3 pt-1 sm:p-4 sm:pt-1">
+
+                    <!-- Cards -->
+                    <ul class="space-y-3" x-show="col.orders.length > 0">
+                      <template x-for="o in col.orders" :key="o.id">
+                        <li>
+                          <article :id="cardDomId(o)" tabindex="-1" draggable="true"
+                                    @dragstart="startDrag($event, o)" @dragend="endDrag()"
+                                    class="cursor-grab rounded-xl border border-line bg-surface p-3.5 shadow-card transition hover:border-stitch hover:shadow-md active:cursor-grabbing focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                                    :class="cardClass(o)">
+
+                            <!-- Order ID + due date -->
+                            <div class="flex items-start justify-between gap-2">
+                              <div class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                                <span class="text-sm font-semibold tabular-nums text-brand-deep" x-text="o.id"></span>
+                                <button type="button" @click="openDetail(o)"
+                                        :aria-label="'View details for ' + o.id"
+                                        class="inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-xs font-semibold text-brand underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-brand/40">
+                                  View details <i class="h-3 w-3" data-lucide="arrow-up-right"></i>
+                                </button>
+                              </div>
+                              <span class="inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-xs font-semibold" :class="dueBadge(o).cls">
+                                <i class="h-3 w-3" :data-lucide="dueBadge(o).icon"></i>
+                                <span x-text="dueBadge(o).text"></span>
+                              </span>
+                            </div>
+
+                            <!-- Customer + garment -->
+                            <p class="mt-1.5 truncate text-base font-semibold leading-snug" x-text="o.customer"></p>
+                            <p class="mt-0.5 flex items-center gap-1.5 text-[13px] sm:text-sm">
+                              <i class="h-3.5 w-3.5 shrink-0 text-muted" data-lucide="shirt"></i>
+                              <span class="truncate" x-text="o.garment"></span>
+                            </p>
+
+                            <!-- Tailor + payment -->
+                            <div class="mt-2.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5 border-t border-line pt-2.5">
+                              <span class="inline-flex min-w-0 items-center gap-2 text-[13px] font-medium sm:text-sm" x-show="o.tailorId">
+                                <span :class="tailorRing(o.tailorId)" class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-avatar text-xs font-semibold text-brand ring-1 ring-inset" x-text="tailorName(o).charAt(0).toUpperCase()"></span>
+                                <span class="truncate" x-text="tailorName(o)"></span>
+                              </span>
+                              <span class="inline-flex min-w-0 items-center gap-2 text-[13px] text-muted sm:text-sm" x-show="!o.tailorId">
+                                <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-dashed border-stitch bg-surface text-muted"><i class="h-3.5 w-3.5" data-lucide="user-x"></i></span>
+                                Unassigned
+                              </span>
+                              <span class="inline-flex h-7 max-w-full items-center gap-1.5 rounded-full pl-2.5 pr-3 text-xs font-medium sm:text-[13px]" :class="payBadge(o).cls">
+                                <i class="h-3 w-3 shrink-0" :data-lucide="payBadge(o).icon"></i>
+                                <span class="truncate" x-text="payBadge(o).text"></span>
+                              </span>
+                            </div>
+
+                            <!-- Quick actions (clicks here do not open the order) -->
+                            <div class="mt-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5" @click.stop>
+                              <button type="button" x-show="col.next" @click="requestMove(o.id, col.next)"
+                                      :aria-label="col.nextLabel + ': ' + o.id"
+                                      class="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-brand px-3 text-sm font-semibold text-onbrand shadow-sm transition hover:bg-brand-deep focus-visible:ring-2 focus-visible:ring-brand/40 sm:h-9">
+                                <i class="h-4 w-4" :data-lucide="col.nextIcon || 'arrow-right'"></i>
+                                <span x-text="col.nextLabel"></span>
+                              </button>
+                              <button type="button" x-show="col.prev" @click="requestMove(o.id, col.prev)"
+                                      :aria-label="'Move ' + o.id + ' back to ' + stageLabel(col.prev)"
+                                      class="inline-flex items-center justify-center gap-1.5 rounded-lg font-semibold text-brand transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40"
+                                      :class="col.next ? 'h-9 px-2 text-xs' : 'h-10 w-full border border-line bg-surface px-3 text-sm sm:h-9'">
+                                <i class="h-3.5 w-3.5" data-lucide="undo-2"></i>
+                                <span x-text="'Back to ' + stageLabel(col.prev)"></span>
+                              </button>
+                              <button type="button" x-show="col.key === 'ready'" @click="notifyDemo(o)" title="Demo only: no SMS is sent"
+                                      class="inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-brand transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40">
+                                <i class="h-3.5 w-3.5" data-lucide="bell"></i> Notify (demo)
+                              </button>
+                            </div>
+                          </article>
+                        </li>
+                      </template>
+                    </ul>
+
+                    <!-- Empty column / no search results -->
+                    <div x-show="col.orders.length === 0 &amp;&amp; !canDrop(col.key)" class="grid place-items-center gap-1 rounded-lg border border-dashed border-stitch px-4 py-10 text-center">
+                      <span class="grid h-9 w-9 place-items-center rounded-full bg-blush text-brand"><i class="h-[18px] w-[18px]" data-lucide="inbox"></i></span>
+                      <p class="mt-1 text-sm font-medium" x-text="emptyTitle(col)"></p>
+                      <p class="text-xs text-muted" x-text="emptyText(col)"></p>
+                    </div>
+
+                    <!-- Drop target shown only while dragging a card from another column -->
+                    <div x-show="canDrop(col.key)" class="mt-3 grid place-items-center rounded-lg border border-dashed px-3 py-5 text-center text-xs font-semibold transition"
+                          :class="overStage === col.key ? 'border-brand bg-surface text-brand-deep' : 'border-stitch text-muted'"
+                          x-text="dropHint(col)"></div>
+                  </div>
+                </section>
+              </template>
+            </div>
+
+            <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+              <span>Demo board: stage changes are saved in this browser only and are shared with Orders and Order Details.</span>
+              <span class="font-semibold text-wine" x-show="saveFailed">Browser storage is unavailable, so changes will reset on refresh.</span>
+              <button type="button" x-show="hasChanges" @click="resetDemo()" class="font-semibold text-brand underline-offset-2 hover:underline">Reset demo board</button>
+            </p>
+
+            <!-- Claim confirmation (US-09): shown when an order with a balance is moved to Claimed -->
+            <div class="fixed inset-0 z-50 flex items-end justify-center bg-ink/50 p-0 backdrop-blur-sm sm:items-center sm:p-4" x-cloak x-show="claimConfirm !== null"
+                  @click.self="cancelClaim()" x-effect="if (claimConfirm) $nextTick(() => $refs.claimCancel &amp;&amp; $refs.claimCancel.focus())">
+              <div class="max-h-full w-full max-w-md space-y-4 overflow-y-auto rounded-t-2xl border border-line bg-surface p-5 shadow-xl sm:rounded-2xl sm:p-6"
+                    role="alertdialog" aria-modal="true" aria-labelledby="claim-title" aria-describedby="claim-desc">
+                <div class="flex items-start gap-3">
+                  <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-rosebg text-wine"><i class="h-5 w-5" data-lucide="alert-triangle"></i></span>
+                  <div class="min-w-0">
+                    <h3 id="claim-title" class="font-display text-2xl font-semibold leading-8 text-brand-deep" x-text="claimTitle"></h3>
+                    <p id="claim-desc" class="mt-1 text-sm" x-text="claimMessage"></p>
+                  </div>
+                </div>
+                <dl class="space-y-1.5 rounded-lg bg-canvas p-3 text-sm">
+                  <div class="flex justify-between gap-3"><dt>Order</dt><dd class="font-semibold tabular-nums" x-text="claimOrder ? claimOrder.id : ''"></dd></div>
+                  <div class="flex justify-between gap-3"><dt>Customer</dt><dd class="text-right font-semibold" x-text="claimOrder ? claimOrder.customer : ''"></dd></div>
+                  <div class="flex justify-between gap-3 border-t border-line pt-1.5"><dt>Outstanding balance</dt><dd class="font-semibold text-wine" x-text="claimBalanceText"></dd></div>
+                </dl>
+                <p class="text-xs text-muted">Claiming here does not record a payment or change the balance.</p>
+                <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <button type="button" x-ref="claimCancel" @click="cancelClaim()" class="h-10 rounded-lg border border-line px-4 text-sm font-medium text-brand transition hover:bg-blush focus-visible:ring-2 focus-visible:ring-brand/40">Cancel</button>
+                  <button type="button" @click="confirmClaim()" class="h-10 rounded-lg bg-brand px-4 text-sm font-semibold text-onbrand transition hover:bg-brand-deep focus-visible:ring-2 focus-visible:ring-brand/40">Claim anyway</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stage-change feedback (with Undo) -->
+            <div class="pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex justify-center px-4" role="status" aria-live="polite">
+              <div x-cloak x-show="toast.show" x-transition.opacity class="pointer-events-auto flex max-w-md items-center gap-3 rounded-xl bg-brand-deep py-2.5 pl-4 pr-2.5 text-sm text-onbrand shadow-xl">
+                <span class="shrink-0" x-show="toast.kind === 'success'"><i class="h-4 w-4" data-lucide="check-circle-2"></i></span>
+                <span class="shrink-0" x-show="toast.kind === 'info'"><i class="h-4 w-4" data-lucide="info"></i></span>
+                <span class="min-w-0 flex-1" x-text="toast.message"></span>
+                <button type="button" x-show="toast.undo" @click="undoMove()" class="shrink-0 rounded-lg px-2.5 py-1 text-sm font-semibold underline-offset-2 hover:bg-white/10 hover:underline focus-visible:ring-2 focus-visible:ring-onbrand/60">Undo</button>
+                <button type="button" @click="hideToast()" aria-label="Dismiss message" class="grid h-7 w-7 shrink-0 place-items-center rounded-lg hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-onbrand/60"><i class="h-4 w-4" data-lucide="x"></i></button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      /* ------------------------------------------------------------------
+          PRODUCTION KANBAN (demo)
+
+          - Orders are NOT stored on this page. They come from the shared order
+            records in app.js (tahianGetOrders): IDs, customers, garments,
+            tailors, due dates, stages and payments, the same ones used by
+            orders.html and order-detail.html.
+          - Moving a card calls tahianSetOrderStage(), which changes only that
+            order's stage. Payments are never changed here.
+          - Payment status and balance are worked out by tahianOrderPayment()
+            in app.js, so they match the other pages (including partial payments
+            recorded on order-detail.html).
+          - The board is re-read when the page opens, when it is restored by Back,
+            when another tab changes the saved orders, and before every move.
+          - Tailors are stored as IDs (T-0001, ...) and looked up with
+            tahianGetTailors() from app.js, so names stay in one place.
+          ------------------------------------------------------------------ */
+
+      // Fixed reference date for the October 2026 demo orders, not the live
+      // calendar, so the old demo orders do not turn overdue.
+      const KANBAN_TODAY = TAHIAN_DEMO_TODAY;
+      const KANBAN_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      // Exactly three stages. prev/next are the quick-action targets.
+      const KANBAN_STAGES = [
+        { key: 'in_progress', label: 'In Progress', hint: 'Being made by the tailors', icon: 'clock', tone: 'bg-sand text-ochre',
+          prev: null, next: 'ready', nextLabel: 'Mark ready', nextIcon: 'package-check',
+          emptyTitle: 'Nothing in progress', emptyText: 'Orders being made will appear here.' },
+        { key: 'ready', label: 'Ready for Pickup', hint: 'Finished, waiting for the customer', icon: 'package-check', tone: 'bg-sage text-moss',
+          prev: 'in_progress', next: 'claimed', nextLabel: 'Mark claimed', nextIcon: 'circle-check-big',
+          emptyTitle: 'Nothing ready yet', emptyText: 'Mark an order ready when the garment is finished.' },
+        { key: 'claimed', label: 'Claimed', hint: 'Collected by the customer', icon: 'circle-check-big', tone: 'bg-blush text-brand',
+          prev: 'ready', next: null, nextLabel: '', nextIcon: '',
+          emptyTitle: 'No claimed orders', emptyText: 'Orders handed to customers will appear here.' }
+      ];
+      const KANBAN_STAGE_KEYS = KANBAN_STAGES.map((stage) => stage.key);
+
+      // Avatar ring colours, same as the Dashboard and Orders pages.
+      const KANBAN_TAILOR_RINGS = { 'T-0001': 'ring-sky-200', 'T-0002': 'ring-violet-200' };
+
+      function kanbanBoard() {
+        return {
+          stages: KANBAN_STAGES,
+          orders: [],
+          tailors: [],
+          q: '',
+          tailorFilter: 'All', // 'All', 'Unassigned' or a tailor ID
+          dragId: null,
+          overStage: null,
+          flashId: null,
+          claimConfirm: null, // order ID waiting for the claim confirmation
+          toast: { show: false, message: '', kind: 'success', undo: null },
+          toastTimer: null,
+          flashTimer: null,
+          saveFailed: false,
+
+          init() {
+            this.reload();
+          },
+
+          /* ---------- shared orders ---------- */
+          // Re-read the shared orders and tailors. If the browser could not save,
+          // keep what is on screen instead of throwing the changes away.
+          reload() {
+            if (this.saveFailed) return;
+            this.tailors = typeof tahianGetTailors === 'function' ? tahianGetTailors() : [];
+            this.orders = tahianGetOrders();
+          },
+          // The stage an order has in the sample data.
+          seedStage(order) {
+            const seed = TAHIAN_ORDER_SEED.find((item) => item.id === order.id);
+            return seed ? seed.stage : order.stage;
+          },
+          get hasChanges() {
+            return this.orders.some((order) => order.stage !== this.seedStage(order));
+          },
+          // Puts every order back to its sample stage. Payments are not touched.
+          // restore: true means a sample claim is put back without a made-up claim date.
+          resetDemo() {
+            let failed = false;
+            this.orders.forEach((order) => {
+              const stage = this.seedStage(order);
+              if (order.stage === stage) return;
+              const saved = tahianSetOrderStage(order.id, stage, { restore: true });
+              if (!saved || !saved.saved) failed = true;
+            });
+            this.saveFailed = failed;
+            if (failed) {
+              this.orders.forEach((order) => { order.stage = this.seedStage(order); });
+            } else {
+              this.reload();
+            }
+            this.showToast('Demo board reset to the sample stages.', 'info');
+          },
+
+          /* ---------- lookups ---------- */
+          orderById(id) { return this.orders.find((order) => order.id === id) || null; },
+          stageLabel(key) {
+            const stage = this.stages.find((item) => item.key === key);
+            return stage ? stage.label : '';
+          },
+          tailorById(id) { return this.tailors.find((tailor) => tailor.id === id) || null; },
+          tailorName(order) {
+            const tailor = this.tailorById(order.tailorId);
+            return tailor ? tailor.name : 'Unknown tailor';
+          },
+          tailorRing(id) { return KANBAN_TAILOR_RINGS[id] || 'ring-line'; },
+          // Tailors who actually have orders on this board (for the filter buttons).
+          get tailorOptions() {
+            const ids = this.orders.map((order) => order.tailorId).filter(Boolean);
+            return this.tailors.filter((tailor) => ids.includes(tailor.id));
+          },
+          cardDomId(order) { return 'kanban-card-' + order.id.replace(/\s+/g, '-'); },
+
+          /* ---------- search, filter, columns ---------- */
+          norm(text) { return String(text).toLowerCase().replace(/\s+/g, ''); },
+          matches(order) {
+            const query = this.norm(this.q);
+            const textOk = query === '' || this.norm(order.id).includes(query) || this.norm(order.customer).includes(query);
+            const tailorOk = this.tailorFilter === 'All' ||
+              (this.tailorFilter === 'Unassigned' ? !order.tailorId : order.tailorId === this.tailorFilter);
+            return textOk && tailorOk;
+          },
+          get filtersActive() { return this.q.trim() !== '' || this.tailorFilter !== 'All'; },
+          resetFilters() { this.q = ''; this.tailorFilter = 'All'; },
+          get visibleOrders() { return this.orders.filter((order) => this.matches(order)); },
+          get overdueCount() { return this.visibleOrders.filter((order) => this.dueState(order) === 'overdue').length; },
+          get todayCount() { return this.visibleOrders.filter((order) => this.dueState(order) === 'today').length; },
+          // Most urgent first. Claimed orders show the most recent first.
+          get columns() {
+            return this.stages.map((stage) => {
+              const direction = stage.key === 'claimed' ? -1 : 1;
+              const cards = this.orders
+                .filter((order) => order.stage === stage.key && this.matches(order))
+                .sort((a, b) => direction * a.due.localeCompare(b.due) || a.id.localeCompare(b.id));
+              return {
+                ...stage,
+                total: this.orders.filter((order) => order.stage === stage.key).length,
+                orders: cards
+              };
+            });
+          },
+          countText(col) {
+            return this.filtersActive ? col.orders.length + ' of ' + col.total : String(col.orders.length);
+          },
+          filterClass(value) {
+            return this.tailorFilter === value
+              ? 'bg-brand font-semibold text-onbrand shadow-sm'
+              : 'font-medium text-ink hover:bg-blush';
+          },
+          emptyTitle(col) { return this.filtersActive ? 'No matching orders' : col.emptyTitle; },
+          emptyText(col) { return this.filtersActive ? 'Try another search or tailor.' : col.emptyText; },
+
+          /* ---------- due dates (same rules as orders.html) ---------- */
+          daysLate(order) { return Math.round((new Date(KANBAN_TODAY) - new Date(order.due)) / 86400000); },
+          dueState(order) {
+            if (order.stage === 'claimed') return 'done';
+            const days = this.daysLate(order);
+            return days > 0 ? 'overdue' : (days === 0 ? 'today' : 'upcoming');
+          },
+          dueLabel(order) {
+            const parts = order.due.split('-');
+            return KANBAN_MONTHS[Number(parts[1]) - 1] + ' ' + Number(parts[2]);
+          },
+          dueBadge(order) {
+            const state = this.dueState(order);
+            if (state === 'overdue') {
+              const days = this.daysLate(order);
+              return { text: days + (days === 1 ? ' day' : ' days') + ' overdue', icon: 'alert-circle', cls: 'bg-rosebg text-wine' };
+            }
+            if (state === 'today') return { text: 'Due today', icon: 'calendar-clock', cls: 'bg-blush text-brand-deep' };
+            return { text: 'Due ' + this.dueLabel(order), icon: 'calendar-days', cls: 'text-muted' };
+          },
+
+          /* ---------- payment ---------- */
+          money(amount) {
+            const n = Number(amount);
+            return 'PHP ' + n.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 });
+          },
+          // Paid status and balance come from the shared payment rules in app.js.
+          payBadge(order) {
+            const payment = tahianOrderPayment(order);
+            if (payment.settled) return { text: 'Paid', icon: 'check-circle-2', cls: 'bg-sage text-moss' };
+            if (typeof payment.balance === 'number') {
+              return { text: this.money(payment.balance) + ' balance', icon: 'circle-dashed', cls: 'bg-rosebg text-wine' };
+            }
+            return { text: 'Unpaid, amount unknown', icon: 'circle-dashed', cls: 'bg-rosebg text-wine' };
+          },
+
+          /* ---------- moving cards ---------- */
+          // Production follows In Progress -> Ready for Pickup -> Claimed.
+          // Users may move one stage forward or backward, never skip a stage.
+          canTransition(order, stageKey) {
+            if (!order) return false;
+            const from = KANBAN_STAGE_KEYS.indexOf(order.stage);
+            const to = KANBAN_STAGE_KEYS.indexOf(stageKey);
+            return from !== -1 && to !== -1 && Math.abs(to - from) === 1;
+          },
+          requestMove(id, stageKey) {
+            this.reload(); // never move a card from an old copy
+            const order = this.orderById(id);
+            if (!order || order.stage === stageKey) return;
+            if (!this.canTransition(order, stageKey)) {
+              this.showToast('Move orders one stage at a time: In Progress, Ready for Pickup, then Claimed.', 'info');
+              return;
+            }
+            if (stageKey === 'claimed' && !tahianOrderPayment(order).settled) {
+              this.claimConfirm = id; // balance owed or unknown: ask first
+              return;
+            }
+            this.applyMove(id, stageKey);
+          },
+          applyMove(id, stageKey, isUndo) {
+            const order = this.orderById(id);
+            if (!order || order.stage === stageKey) return;
+            const from = order.stage;
+            const saved = tahianSetOrderStage(id, stageKey); // changes the stage only, never the payment
+            if (!saved) {
+              this.reload();
+              this.showToast('That order could not be found in the saved data.', 'info');
+              return;
+            }
+            this.saveFailed = !saved.saved;
+            order.stage = stageKey;
+            if (saved.saved) this.reload();
+            this.flash(id);
+            this.focusCard(id);
+            const message = id + (isUndo ? ' moved back to ' : ' moved to ') + this.stageLabel(stageKey) + '.';
+            this.showToast(message, 'success', isUndo ? null : { id: id, from: from });
+          },
+          undoMove() {
+            const undo = this.toast.undo;
+            if (undo) this.applyMove(undo.id, undo.from, true);
+          },
+          flash(id) {
+            this.flashId = id;
+            clearTimeout(this.flashTimer);
+            this.flashTimer = setTimeout(() => { this.flashId = null; }, 1800);
+          },
+          // The card is re-created in its new column, so keyboard users get focus back on it.
+          focusCard(id) {
+            this.$nextTick(() => {
+              const card = document.getElementById(this.cardDomId({ id: id }));
+              if (card) card.focus();
+            });
+          },
+          cardClass(order) {
+            const classes = [];
+            const state = this.dueState(order);
+            if (state === 'overdue') classes.push('border-l-4 border-l-wine');
+            else if (state === 'today') classes.push('border-l-4 border-l-brand');
+            if (this.dragId === order.id) classes.push('opacity-40');
+            if (this.flashId === order.id) classes.push('ring-2 ring-moss/60');
+            return classes.join(' ');
+          },
+
+          /* ---------- claim confirmation (US-09) ---------- */
+          get claimOrder() { return this.claimConfirm ? this.orderById(this.claimConfirm) : null; },
+          get claimPayment() { return this.claimOrder ? tahianOrderPayment(this.claimOrder) : null; },
+          get claimHasAmount() {
+            return !!this.claimPayment && !this.claimPayment.settled && typeof this.claimPayment.balance === 'number';
+          },
+          get claimTitle() { return this.claimHasAmount ? 'Unpaid balance' : 'Balance not confirmed'; },
+          get claimMessage() {
+            if (this.claimHasAmount) return 'This order still has an unpaid balance. Check payment with the customer before handing over the garment.';
+            return 'This order is marked unpaid, but the amount owed is not on record. Confirm the balance with the customer before handing over the garment.';
+          },
+          get claimBalanceText() {
+            return this.claimHasAmount ? this.money(this.claimPayment.balance) : 'Unknown';
+          },
+          confirmClaim() {
+            const id = this.claimConfirm;
+            this.claimConfirm = null;
+            if (id) this.applyMove(id, 'claimed');
+          },
+          cancelClaim() {
+            const id = this.claimConfirm;
+            this.claimConfirm = null;
+            if (id) this.focusCard(id);
+          },
+
+          /* ---------- drag and drop (mouse and pen; touch uses the card buttons) ---------- */
+          startDrag(event, order) {
+            this.dragId = order.id;
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', order.id);
+          },
+          endDrag() {
+            this.dragId = null;
+            this.overStage = null;
+          },
+          canDrop(stageKey) {
+            return this.canTransition(this.orderById(this.dragId), stageKey);
+          },
+          onDragOver(event, stageKey) {
+            if (!this.canDrop(stageKey)) return; // the card's own column is not a drop target
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            this.overStage = stageKey;
+          },
+          onDragLeave(event) {
+            if (!event.currentTarget.contains(event.relatedTarget)) this.overStage = null;
+          },
+          onDrop(stageKey) {
+            const id = this.dragId;
+            this.endDrag();
+            if (id) this.requestMove(id, stageKey);
+          },
+          columnClass(col) {
+            if (!this.dragId) return 'border-line';
+            if (!this.canDrop(col.key)) return 'border-line opacity-70';
+            return this.overStage === col.key
+              ? 'border-brand bg-blush/50 ring-2 ring-brand/25'
+              : 'border-dashed border-brand/50';
+          },
+          dropHint(col) {
+            const order = this.orderById(this.dragId);
+            const needsCheck = col.key === 'claimed' && order && !tahianOrderPayment(order).settled;
+            return 'Drop here to move to ' + col.label + (needsCheck ? ' (balance check first)' : '');
+          },
+
+          /* ---------- order details ---------- */
+          // Every order now has a detail page: order-detail.html?id=...
+          openDetail(order) { window.location.assign(tahianOrderDetailUrl(order)); },
+
+          /* ---------- pickup notice (US-06): simulated only ---------- */
+          notifyDemo(order) {
+            this.showToast('Demo only: no SMS was sent to ' + order.customer + '.', 'info');
+          },
+
+          /* ---------- feedback toast ---------- */
+          showToast(message, kind, undo) {
+            this.toast = { show: true, message: message, kind: kind || 'success', undo: undo || null };
+            clearTimeout(this.toastTimer);
+            this.toastTimer = setTimeout(() => this.hideToast(), 6000);
+          },
+          hideToast() {
+            this.toast.show = false;
+            this.toast.undo = null;
+          }
+        };
+      }
+    </script>
+
+    <script>
+      lucide.createIcons();
+      document.addEventListener('alpine:initialized', () => {
+        Alpine.effect(() => { lucide.createIcons(); });
+      });
+    </script>
+
+    <!-- print job slip -->
+    <div class="hidden print:block" id="print-job-slip">
+      <div class="text-center border-b border-dashed border-black pb-3">
+        <h1 class="text-xl font-bold tracking-tight">TahiAn</h1>
+        <p class="font-semibold">Morsons HOME Industries</p>
+        <p>Poblacion, Iligan City</p>
+        <p class="mt-2 text-sm font-bold uppercase tracking-widest">Job Slip</p>
+      </div>
+      <div class="py-3 border-b border-dashed border-black">
+        <p class="text-center text-lg font-bold">ORD 1043</p>
+        <dl class="mt-2 space-y-1">
+          <div class="flex justify-between gap-3"><dt>Garment</dt><dd class="font-semibold text-right">School Polo</dd></div>
+          <div class="flex justify-between gap-3"><dt>Order date</dt><dd class="text-right">Oct 28, 2026</dd></div>
+          <div class="flex justify-between gap-3"><dt>Due date</dt><dd class="font-semibold text-right">Oct 28, 2026</dd></div>
+        </dl>
+      </div>
+      <div class="py-3 border-b border-dashed border-black">
+        <h2 class="mb-2 font-bold uppercase">Customer &amp; Assignment</h2>
+        <dl class="space-y-1">
+          <div class="flex justify-between gap-3"><dt>Customer</dt><dd class="font-semibold text-right">Lance Sacay</dd></div>
+          <div class="flex justify-between gap-3"><dt>Mobile</dt><dd class="text-right">09116912544</dd></div>
+          <div class="flex justify-between gap-3"><dt>Assigned tailor</dt><dd class="font-semibold text-right">Robert</dd></div>
+        </dl>
+      </div>
+      <div class="py-3 border-b border-dashed border-black">
+        <h2 class="mb-2 font-bold uppercase">Measurements — Inches</h2>
+        <table class="w-full">
+          <tbody>
+            <tr><td class="py-0.5">Shoulder</td><td class="text-right font-semibold">17</td><td class="pl-4">Chest</td><td class="text-right font-semibold">38</td></tr>
+            <tr><td class="py-0.5">Length</td><td class="text-right font-semibold">28</td><td class="pl-4">Sleeve</td><td class="text-right font-semibold">9</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="py-3 border-b border-dashed border-black">
+        <h2 class="mb-2 font-bold uppercase">Payment</h2>
+        <dl class="space-y-1">
+          <div class="flex justify-between gap-3"><dt>Total</dt><dd>PHP 2,800</dd></div>
+          <div class="flex justify-between gap-3"><dt>Amount paid</dt><dd>PHP 1,500</dd></div>
+          <div class="flex justify-between gap-3 pt-1 font-bold"><dt>Balance</dt><dd>PHP 1,300</dd></div>
+        </dl>
+      </div>
+      <div class="py-3 border-b border-dashed border-black">
+        <h2 class="font-bold uppercase">Tailoring Notes</h2>
+        <div class="h-6 border-b border-black"></div>
+        <div class="h-6 border-b border-black"></div>
+      </div>
+      <div class="pt-3 text-center">
+        <img alt="QR code placeholder — not scannable" class="block mx-auto w-20 h-20" height="80" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect x='1' y='1' width='98' height='98' fill='white' stroke='black' stroke-dasharray='4 3'/%3E%3Ctext x='50' y='46' text-anchor='middle' font-family='Arial' font-size='18'%3EQR%3C/text%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-size='10'%3EPLACEHOLDER%3C/text%3E%3C/svg%3E" width="80"/>
+        <p class="mt-1 text-[9px]">QR placeholder — not scannable</p>
+        <p class="mt-3">Please present this slip when collecting your order.</p>
+        <p class="mt-1 font-semibold">Thank you!</p>
+      </div>
+    </div>
+  </body>
+</html>
